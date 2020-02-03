@@ -105,7 +105,7 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=2, option='B', dropout=0.25):
+    def __init__(self, block, num_blocks, num_classes=7, option='B', dropout=0.25):
         super(ResNet, self).__init__()
         self.in_planes = 64
 
@@ -118,6 +118,7 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2, option=option, dropout=dropout)
 
         self.linear = nn.Linear(98304, num_classes)
+        self.softmax = torch.nn.Softmax(dim=1)
         self._initialize_weights()
 
     def _make_layer(self, block, planes, num_blocks, stride, option, dropout):
@@ -137,6 +138,7 @@ class ResNet(nn.Module):
         out = F.avg_pool2d(out, 2)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
+        out = self.softmax(out)
 
         return out
 
