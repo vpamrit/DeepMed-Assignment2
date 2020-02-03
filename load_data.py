@@ -8,7 +8,7 @@ from pandas import DataFrame, read_csv
 from skimage import io, transform #might be the cause of torchvision failures
 
 
-class SkinData(Dataset):
+class SkinDataset(Dataset):
 
     def __init__(self, labels_file, root_dir, transform=None):
         self.labels = pd.read_csv(labels_file)
