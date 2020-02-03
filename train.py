@@ -33,10 +33,10 @@ def main(args):
     if not os.path.exists(args.model_save_dir):
         os.makedirs(args.model_save_dir)
 
-    train_data = SkinDataset(labels_file=args.labels_file,
+    train_data = SkinDataset(labels_file=args.train_labels_file,
                            root_dir=args.train_image_dir);
 
-    validation_data = SkinDataset(labels_file=args.labels_file,
+    validation_data = SkinDataset(labels_file=args.validation_labels_file,
                                    root_dir=args.validation_image_dir);
 
     train_loader = DataLoader(dataset=train_data, batch_size=args.batch_size, shuffle=True);
@@ -171,7 +171,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--train_image_dir', type=str, default='./data/train/', help='path to training set')
     parser.add_argument('--validation_image_dir', type=str, default='./data/test/', help='path to validation set')
-    parser.add_argument('--labels_file', type=str, default='./data/labels/labels.csv', help='path to labels file for both validation and training datasets')
+    parser.add_argument('--train_labels_file', type=str, default='./data/labels/Train_labels.csv', help='path to labels file for both validation and training datasets')
+    parser.add_argument('--validation_labels_file', type=str, default='./data/labels/Test_labels.csv', help='path to labels file for both validation and training datasets')
     parser.add_argument('--model_save_dir', type=str, default='./saved_models/', help='path to location to save models')
     parser.add_argument('--save_step', type=int , default=4, help='step size for saving trained models')
     parser.add_argument('--save_training_plot', nargs='?', type=str, const='./', help='location to save a plot showing testing and validation loss for the model')
