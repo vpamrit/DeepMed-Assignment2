@@ -117,7 +117,7 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=3, option=option, dropout=dropout)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2, option=option, dropout=dropout)
 
-        self.linear = nn.Linear(71680, num_classes)
+        self.linear = nn.Linear(98304, num_classes)
         self._initialize_weights()
 
     def _make_layer(self, block, planes, num_blocks, stride, option, dropout):

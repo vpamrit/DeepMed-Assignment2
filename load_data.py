@@ -37,7 +37,7 @@ class SkinDataset(Dataset):
         img_name, raw_image, label = self.get_data(idx)
 
         target = torch.from_numpy(label.astype('float').reshape(-1, 7))
-        image = torch.from_numpy(image.transpose((2,0,1)))
+        image = torch.from_numpy(raw_image.transpose((2,0,1)))
 
         return image, target
 
