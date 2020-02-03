@@ -38,8 +38,6 @@ class SkinDataset(Dataset):
     def __getitem__(self, idx):
         img_name, raw_image, label = self.get_data(idx)
 
-        print(label.size())
-
         target = torch.from_numpy(label)
         image = torch.from_numpy(raw_image.transpose((2,0,1)))
 
