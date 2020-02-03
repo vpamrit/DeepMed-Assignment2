@@ -66,7 +66,7 @@ def main(args):
     params = net.parameters()
 
     # Loss and optimizer
-    criterion = nn.LogSoftmax(dim=1)
+    criterion = nn.CrossEntropyLoss()
 
     if args.optim != None:
         if args.optim == "adadelta":

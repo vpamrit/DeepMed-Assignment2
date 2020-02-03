@@ -31,10 +31,12 @@ class SkinDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        return img_name, image, target
+        return img_name, image, np.where(target==1)
 
     def __getitem__(self, idx):
         img_name, raw_image, label = self.get_data(idx)
+
+        print(label.size())
 
         target = torch.from_numpy(label.astype('float').reshape(-1, 7))
         image = torch.from_numpy(raw_image.transpose((2,0,1)))
