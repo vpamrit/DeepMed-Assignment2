@@ -103,7 +103,7 @@ def main(args):
             optimizer.zero_grad()
 
             outputs = net(inputs.float())
-            loss = criterion(outputs.float(), labels.float())
+            loss = criterion(outputs.float(), labels.squeeze().long())
             loss.backward()
 
 
@@ -124,7 +124,7 @@ def main(args):
             net.eval()
             with torch.no_grad():
                 outputs = net(inputs.float())
-                loss += criterion(outputs, labels.float()).item()
+                loss += criterion(outputs, labels.squeeze().long()).item()
 
         print("------------------------------------------------------------")
         print("Epoch %5d" % (epoch+1))

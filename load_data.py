@@ -31,7 +31,9 @@ class SkinDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        return img_name, image, np.where(target==1)
+        label = np.where(target==1)[0]
+
+        return img_name, image, label
 
     def __getitem__(self, idx):
         img_name, raw_image, label = self.get_data(idx)
