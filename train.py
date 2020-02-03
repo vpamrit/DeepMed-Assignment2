@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 
 #custom imports
 import load_data as ld
-from load_data import SkinDataset
+from load_data import SkinData
 
 #global variables related to the image dataset properties
 IMG_WIDTH = 490
