@@ -121,8 +121,9 @@ class SampleSet:
         return target_list
 
 
-class SkinDataLoader():
-    def __init__(self, dataset, dist_emulation, batch_size, epoch_size=None, num_classes=7):
+#custom dataloader but single-threaded
+class SkinDataManager(Dataset):
+    def __init__(self, dataset, dist_emulation, batch_size, epoch_size=None, num_classes=7, mode="soft"):
         self.data = dataset
         self.flatten = dist_emulation
         self.epoch_size = epoch_size
@@ -131,6 +132,7 @@ class SkinDataLoader():
         self.num_classes = num_classes
         self.batch_num = 0
         self.epoch = None
+        self.mode = mode
 
         if self.epoch_size == None:
             self.epoch_size = len(dataset)
@@ -173,7 +175,7 @@ class SkinDataLoader():
         print(sum(self.num_samples))
 
     def __getitem__(self, idx):
-        return self.epoch[idx]
+        return self.data[self.epoch[idx]]
 
     def __len__(self):
         return len(self.epoch)
@@ -182,6 +184,9 @@ class SkinDataLoader():
         return self
 
     def __next__(self):
+        if self.mode == "soft":
+            return next(super())
+
         if self.batch_size*self.batch_num >= len(self):
             print("YIKES")
             self.generate_epoch_samples();
