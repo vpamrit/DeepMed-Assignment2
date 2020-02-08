@@ -130,6 +130,7 @@ class SkinDataLoader():
         self.avg = len(dataset)/num_classes
         self.num_classes = num_classes
         self.epoch = None
+        self.batch_num = 0
 
         if self.epoch_size == None:
             self.epoch_size = len(dataset)
@@ -166,6 +167,7 @@ class SkinDataLoader():
         #set up unused for future use
         self.unused = self.indices.clone()
         self.used = SampleSet()
+        self.generate_epoch_samples()
 
         print(self.num_samples)
         print(sum(self.num_samples))
@@ -176,7 +178,19 @@ class SkinDataLoader():
     def __len__(self):
         return len(self.epoch)
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.batch_size*self.batch_num >= len(self):
+            print("YIKES")
+            self.generate_epoch_samples();
+            raise StopIteration()
+        else:
+            return self.get_batch()
+
     def generate_epoch_samples(self):
+        self.batch_num = 0
         epoch_samples = []
         remaining_samples = self.num_samples.copy()
 
@@ -195,6 +209,20 @@ class SkinDataLoader():
 
         self.epoch = epoch_samples
         return epoch_samples
+
+    def get_batch(self):
+        start_index = self.batch_num*self.batch_size
+        newsample, newlabel = self.data[self.epoch[start_index]]
+        samples, labels = newsample.unsqueeze(0), newlabel.unsqueeze(0)
+
+
+        for i in range(start_index+1, min(start_index+self.batch_size, len(self))):
+            newsample, newlabel = self.data[self.epoch[i]]
+            samples = torch.cat((samples, newsample.unsqueeze(0)), 0)
+            labels = torch.cat((labels, newlabel.unsqueeze(0)), 0)
+
+        self.batch_num += 1
+        return (samples, labels)
 
     def verify_bags(self, samples):
         print("VERIFYING BAG")
@@ -215,25 +243,3 @@ class SkinDataLoader():
         print(["{0:0.2f}".format(i) for i in avg_bags])
 
         return calc_bags == self.num_samples
-
-    #def get_epoch_samples(self):
-        # for each sample type: (from 1...7)
-            # if undersampling:
-                # init:
-                # make a copy of the master list
-                # regular:
-                # first check if there are any unused (randomly sample from here)
-                # add to current epoch samples
-                # add it to used
-                # once unused is empty and if you need more samples
-                # swap used and unused
-            # if oversampling:
-                # put all items in the list n times (as many times as possible)
-                # randomly sample the remainder to fit
-                # put them in the sample list
-
-        # populate arrays with appropriate amount from each category (add redundancies)
-        # want to make sure to include unused samples (for the next iteration)
-    #    return;
-
-
