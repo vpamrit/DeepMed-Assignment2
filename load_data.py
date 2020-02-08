@@ -129,8 +129,8 @@ class SkinDataLoader():
         self.batch_size = batch_size
         self.avg = len(dataset)/num_classes
         self.num_classes = num_classes
-        self.epoch = None
         self.batch_num = 0
+        self.epoch = None
 
         if self.epoch_size == None:
             self.epoch_size = len(dataset)
@@ -208,7 +208,8 @@ class SkinDataLoader():
             epoch_samples += category_samples
 
         self.epoch = epoch_samples
-        return epoch_samples
+        random.shuffle(self.epoch)
+
 
     def get_batch(self):
         start_index = self.batch_num*self.batch_size
