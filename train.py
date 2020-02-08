@@ -39,7 +39,7 @@ def main(args):
     validation_data = SkinDataset(labels_file=args.validation_labels_file,
                                    root_dir=args.validation_image_dir);
 
-    train_loader = DataLoader(dataset=train_data, batch_size=args.batch_size, shuffle=True);
+    train_manager = SkinDataManager(train_data, args.distribution_emulation_coefficient, args.batch_size, args.epoch_size)
     val_loader = DataLoader(dataset=validation_data, batch_size=args.validation_batch_size)
 
 
@@ -91,6 +91,7 @@ def main(args):
     prev_loss = float("inf")
 
     for epoch in range(args.num_epochs):
+        train_loader = DataLoader(dataset=train_manager, batch_size=args.batch_size, shuffle=True);
         running_loss = 0.0
         total_loss = 0.0
 
@@ -148,6 +149,7 @@ def main(args):
           failed_runs = 0
 
         prev_loss = loss
+        train_manager.generate_epoch_samples()
 
 
     #create a plot of the loss
@@ -178,10 +180,12 @@ if __name__ == '__main__':
     parser.add_argument('--save_training_plot', nargs='?', type=str, const='./', help='location to save a plot showing testing and validation loss for the model')
 
     # Model parameters
+    parser.add_argument('--distribution_emulation_coefficient', type=float, default=0.95, help="coefficient used to move the distribution of train data towards uniform (i.e. 0 is true distribution of train dataset, 1 is uniform distribution)")
+    parser.add_argument('--epoch_size', type=int, default=None, help="number of samples per epoch")
     parser.add_argument('--optim', type=str, default="adam", help="options such as adagrad, adadelta, sgd, etc.")
     parser.add_argument('--block_type', type=str, default="bottleneck", help='type of resnet layer (bottleneck or basic)')
     parser.add_argument('--num_layers', type=int , nargs=4, help='input of four space-separated integers (i.e. 1 2 30 2 ) where each number represents the number of blocks at that respective layer')
-    parser.add_argument('--resnet_model', type=int , nargs=1, default=101, help='use to specify a pre-designed resnet model (18 34 50 101 152). NOTE: this option will be overriden if both num_layers and block_type are specified')
+    parser.add_argument('--resnet_model', type=int , nargs=1, default=50, help='use to specify a pre-designed resnet model (18 34 50 101 152). NOTE: this option will be overriden if both num_layers and block_type are specified')
     parser.add_argument('--num_epochs', type=int, default=15)
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--validation_batch_size', type=int, default=2)
