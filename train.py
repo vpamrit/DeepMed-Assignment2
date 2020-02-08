@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 
 #custom imports
 import load_data as ld
-from load_data import SkinDataset
+from load_data import SkinDataset, SkinDataManager
 
 #global variables related to the image dataset properties
 IMG_WIDTH = 490
@@ -85,8 +85,8 @@ def main(args):
         optimizer = torch.optim.Adam(params, lr=args.learning_rate)
 
 
-    val_acc_history = []
-    train_acc_history = []
+    val_loss_history = []
+    train_loss_history = []
     failed_runs = 0
     prev_loss = float("inf")
 
@@ -94,6 +94,8 @@ def main(args):
         train_loader = DataLoader(dataset=train_manager, batch_size=args.batch_size, shuffle=True);
         running_loss = 0.0
         total_loss = 0.0
+        val_correct = 0
+        train_correct = 0
 
         for i, (inputs, labels) in enumerate(train_loader, 0):
             net.train()
@@ -106,6 +108,9 @@ def main(args):
             outputs = net(inputs.float())
             loss = criterion(outputs.float(), labels.squeeze().long())
             loss.backward()
+
+            softm = torch.nn.functional.softmax(outputs.float(), dim=1)
+            train_correct += ((outputs>0.5).float() == labels).float().sum()
 
 
             torch.nn.utils.clip_grad_norm_(net.parameters(), args.clipping_value)
@@ -129,12 +134,14 @@ def main(args):
 
         print("------------------------------------------------------------")
         print("Epoch %5d" % (epoch+1))
-        print("Training loss: {}, Avg Loss: {}".format(total_loss, total_loss / train_data.__len__()))
-        print("Validation Loss: {}, Avg Loss: {}".format(loss, loss / validation_data.__len__()))
+        print("Training loss: {:.5f}, Avg Loss: {:.5f}".format(total_loss, total_loss / train_data.__len__()))
+        print("Training Accuracy: ".format(train_correct / len(train_manager)))
+        print("Validation Loss: {:.5f}, Avg Loss: {:.5f}".format(loss, loss / validation_data.__len__()))
+        print("Validation Accuracy: {}".format(val_correct/ len(validation_data)))
         print("------------------------------------------------------------")
 
-        val_acc_history.append(loss)
-        train_acc_history.append(total_loss)
+        val_loss_history.append(loss)
+        train_loss_history.append(total_loss)
 
         #save the model at the desired step
         if (epoch+1) % args.save_step == 0:
@@ -156,11 +163,11 @@ def main(args):
     plt.title("Training vs Validation Accuracy")
     plt.xlabel("Training Epochs")
     plt.ylabel("Loss")
-    plt.plot(range(1, len(val_acc_history)+1),val_acc_history,label="Validation loss")
-    plt.plot(range(1,len(train_acc_history)+1), train_acc_history,label="Training loss")
-    plt.xticks(np.arange(1, len(train_acc_history)+1, 1.0))
+    plt.plot(range(1, len(val_loss_history)+1),val_loss_history,label="Validation loss")
+    plt.plot(range(1,len(train_loss_history)+1), train_loss_history,label="Training loss")
+    plt.xticks(np.arange(1, len(train_loss_history)+1, 1.0))
     plt.legend()
-    plt.ylim((0, max([max(val_acc_history), max(train_acc_history)])))
+    plt.ylim((0, max([max(val_loss_history), max(train_loss_history)])))
 
     if args.save_training_plot != None:
         plt.savefig(args.save_training_plot+"loss_plot.png")
