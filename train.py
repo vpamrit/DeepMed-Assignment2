@@ -110,7 +110,11 @@ def main(args):
             loss.backward()
 
             softm = torch.nn.functional.softmax(outputs.float(), dim=1)
-            train_correct += ((outputs>0.5).float() == labels).float().sum()
+            train_correct += ((softm>0.5).float() == labels).float().sum()
+            print((outputs>0.5).float())
+            print((outputs>0.5).float().size())
+            print(labels)
+            print(labels.size())
 
 
             torch.nn.utils.clip_grad_norm_(net.parameters(), args.clipping_value)
@@ -135,7 +139,7 @@ def main(args):
         print("------------------------------------------------------------")
         print("Epoch %5d" % (epoch+1))
         print("Training loss: {:.5f}, Avg Loss: {:.5f}".format(total_loss, total_loss / train_data.__len__()))
-        print("Training Accuracy: ".format(train_correct / len(train_manager)))
+        print("Training Accuracy: {}".format(train_correct / len(train_manager)))
         print("Validation Loss: {:.5f}, Avg Loss: {:.5f}".format(loss, loss / validation_data.__len__()))
         print("Validation Accuracy: {}".format(val_correct/ len(validation_data)))
         print("------------------------------------------------------------")
