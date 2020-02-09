@@ -188,7 +188,6 @@ class SkinDataManager(Dataset):
             return next(super())
 
         if self.batch_size*self.batch_num >= len(self):
-            print("YIKES")
             self.generate_epoch_samples();
             raise StopIteration()
         else:

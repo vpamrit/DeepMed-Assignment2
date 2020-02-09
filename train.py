@@ -17,6 +17,11 @@ from load_data import SkinDataset, SkinDataManager
 IMG_WIDTH = 490
 IMG_HEIGHT = 326
 
+def computeAccuracy(outputs, labels):
+    softm = torch.nn.functional.softmax(outputs.float(), dim=1)
+    onehot = torch.nn.functional.one_hot(labels.squeeze(1).to(torch.int64), 7)
+    return ((softm>0.5).bool() & onehot.bool()).sum().item()
+
 def main(args):
     #device configuration
     if args.cpu != None:
@@ -109,18 +114,14 @@ def main(args):
             loss = criterion(outputs.float(), labels.squeeze().long())
             loss.backward()
 
-            softm = torch.nn.functional.softmax(outputs.float(), dim=1)
-            train_correct += ((softm>0.5).float() == labels).float().sum()
-            print((outputs>0.5).float())
-            print((outputs>0.5).float().size())
-            print(labels)
-            print(labels.size())
 
+            train_correct += computeAccuracy(outputs, labels)
 
             torch.nn.utils.clip_grad_norm_(net.parameters(), args.clipping_value)
             optimizer.step()
             running_loss += loss.item()
             total_loss += loss.item()
+
             if i % 2 == 0: #print every mini-batches
               print('[%d, %5d] loss: %.5f' %
                     (epoch + 1, i + 1, running_loss/2))
@@ -134,6 +135,7 @@ def main(args):
             net.eval()
             with torch.no_grad():
                 outputs = net(inputs.float())
+                val_correct += computeAccuracy(outputs, labels)
                 loss += criterion(outputs, labels.squeeze().long()).item()
 
         print("------------------------------------------------------------")
