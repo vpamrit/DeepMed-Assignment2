@@ -1,17 +1,20 @@
 import os
+import PIL
 import random
 import torch
 import torchvision
 import numpy as np
 import pandas as pd
+
+from PIL import Image
 from torch.utils.data import Dataset
 from pandas import DataFrame, read_csv
-from skimage import io, transform #might be the cause of torchvision failures
+from torchvision import transforms
 
 
 class SkinDataset(Dataset):
 
-    def __init__(self, labels_file, root_dir, transform=None):
+    def __init__(self, labels_file, root_dir, transform=False):
         self.labels = pd.read_csv(labels_file)
         self.root_dir = root_dir
         self.transform = transform
@@ -37,20 +40,40 @@ class SkinDataset(Dataset):
 
         target_row = self.labels.iloc[idx, :]
         img_name = target_row.iloc[0]
-        image = io.imread(self.root_dir + img_name + ".jpg")
+        image = Image.open(self.root_dir + img_name + ".jpg")
 
-        if self.transform:
-            image = self.transform(image)
 
         return img_name, image, self.get_label(idx)
 
     def __getitem__(self, idx):
         img_name, raw_image, label = self.get_data(idx)
 
+        if self.transform:
+            image = self.exec_pil_transforms(raw_image)
+        else:
+            image = transforms.functional.to_tensor(raw_image)
+
         target = torch.from_numpy(label)
-        image = torch.from_numpy(raw_image.transpose((2,0,1)))
+
 
         return image, target
+
+    def exec_pil_transforms(self, pil_img):
+        #consider a safe rotation here
+        #or maybe a full rotation
+        transform = torchvision.transforms.Compose([
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+            transforms.RandomPerspective(distortion_scale=0.3),
+            transforms.RandomResizedCrop((450, 600), scale=(0.082, 1.0)),
+            transforms.ColorJitter(0.05, 0.05, 0.05, 0.05),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.25, 0.25, 0.25))
+        ])
+
+
+        return transform(pil_img)
+
 
 class SampleSet:
     def __init__(self, num_classes=7):
