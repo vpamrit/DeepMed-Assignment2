@@ -37,6 +37,7 @@ class SkinDataset(Dataset):
         return label
 
 
+
     def get_data(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
@@ -64,7 +65,7 @@ class SkinDataset(Dataset):
     def exec_pil_transforms(self, pil_img):
         #consider a safe rotation here
         #or maybe a full rotation
-        pil_img.save("./test-imgs/" + str(self.counter) + "imgo.jpg")
+        #pil_img.save("./test-imgs/" + str(self.counter) + "imgo.jpg")
         transform = torchvision.transforms.Compose([
             transforms.RandomHorizontalFlip(0.55),
             transforms.RandomVerticalFlip(0.55),
@@ -79,7 +80,7 @@ class SkinDataset(Dataset):
 
         pil_img = transform(pil_img)
 
-        pil_img.save("./test-imgs/" + str(self.counter) + "img.jpg")
+        #pil_img.save("./test-imgs/" + str(self.counter) + "img.jpg")
         self.counter += 1
 
         return pil_img
@@ -91,6 +92,9 @@ class SampleSet:
 
     def __getitem__(self, idx):
         return self.data[idx]
+
+    def __len__(self):
+        return len(self.data)
 
     def isEmpty(self):
         empty = 1
@@ -171,14 +175,14 @@ class SkinDataManager(Dataset):
             self.epoch_size = len(dataset)
 
 
-        self.indices = SampleSet()
+        self.unused = SampleSet()
 
         #process df to extract the indices for each value [0: ...., 1: ...., 6: s3, s4, s5..]
         for i in range(len(dataset)):
-            self.indices[dataset.get_label(i)[0]].add(i)
+            self.unused[dataset.get_label(i)[0]].add(i)
 
         #compute the desired number of each category in the epoch => populate the arrays
-        self.num_samples = [int(len(samples) - (len(samples) - self.avg)*self.flatten) for samples in self.indices]
+        self.num_samples = [int(len(samples) - (len(samples) - self.avg)*self.flatten) for samples in self.unused]
         total_sum = sum(self.num_samples)
         self.num_samples = [ int(float(x) / float(total_sum) * self.epoch_size) for x in self.num_samples ]
 
@@ -197,10 +201,9 @@ class SkinDataManager(Dataset):
 
             diff -= 1
 
-        self.sampling_type = ["undersampling" if self.num_samples[i] < len(self.indices[i]) else "oversampling" for i in range(self.num_classes) ]
+        self.sampling_type = ["undersampling" if self.num_samples[i] < len(self.unused[i]) else "oversampling" for i in range(self.num_classes) ]
 
         #set up unused for future use
-        self.unused = self.indices.clone()
         self.used = SampleSet()
         self.generate_epoch_samples()
 
@@ -217,26 +220,26 @@ class SkinDataManager(Dataset):
         return self
 
     def __next__(self):
-        if self.mode == "soft":
-            return next(super())
-
         if self.batch_size*self.batch_num >= len(self):
             self.generate_epoch_samples();
             raise StopIteration()
         else:
             return self.get_batch()
 
+    def get_epoch_list(self):
+        return self.epoch
+
     def generate_epoch_samples(self):
         self.batch_num = 0
         epoch_samples = []
-        remaining_samples = self.num_samples.copy()
+        remaining_samples = self.num_samples
 
         for i in range(self.num_classes):
             category_samples = []
-            if self.sampling_type[i] == "undersampling": ## if it is oversampling
+            if self.sampling_type[i] == "undersampling":
                 #attempt to put num_samples items in unused and fill self.used
                 category_samples = SampleSet.pseudorandomly_undersample_to_list(self.unused[i], self.used[i], remaining_samples[i])
-            elif self.sampling_type[i] == "oversampling": ## if it is undersampling
+            elif self.sampling_type[i] == "oversampling":
                 category_samples = SampleSet.pseudorandomly_oversample_to_list(self.unused[i], remaining_samples[i])
             else:
                 print("Unexpected value")
