@@ -39,7 +39,7 @@ def main(args):
         os.makedirs(args.model_save_dir)
 
     train_data = SkinDataset(labels_file=args.train_labels_file,
-                           root_dir=args.train_image_dir);
+                           root_dir=args.train_image_dir, transform=True);
 
     validation_data = SkinDataset(labels_file=args.validation_labels_file,
                                    root_dir=args.validation_image_dir);

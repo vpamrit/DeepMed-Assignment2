@@ -11,6 +11,8 @@ from torch.utils.data import Dataset
 from pandas import DataFrame, read_csv
 from torchvision import transforms
 
+import safetransforms
+
 
 class SkinDataset(Dataset):
 
@@ -18,6 +20,7 @@ class SkinDataset(Dataset):
         self.labels = pd.read_csv(labels_file)
         self.root_dir = root_dir
         self.transform = transform
+        self.counter = 0
 
     def __len__(self):
         return self.labels.shape[0];
@@ -49,9 +52,9 @@ class SkinDataset(Dataset):
         img_name, raw_image, label = self.get_data(idx)
 
         if self.transform:
-            image = self.exec_pil_transforms(raw_image)
-        else:
-            image = transforms.functional.to_tensor(raw_image)
+            raw_image = self.exec_pil_transforms(raw_image)
+
+        image = transforms.functional.to_tensor(raw_image)
 
         target = torch.from_numpy(label)
 
@@ -61,18 +64,25 @@ class SkinDataset(Dataset):
     def exec_pil_transforms(self, pil_img):
         #consider a safe rotation here
         #or maybe a full rotation
+        pil_img.save("./test-imgs/" + str(self.counter) + "imgo.jpg")
         transform = torchvision.transforms.Compose([
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),
-            transforms.RandomPerspective(distortion_scale=0.3),
-            transforms.RandomResizedCrop((450, 600), scale=(0.082, 1.0)),
-            transforms.ColorJitter(0.05, 0.05, 0.05, 0.05),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.25, 0.25, 0.25))
+            transforms.RandomHorizontalFlip(0.55),
+            transforms.RandomVerticalFlip(0.55),
+            transforms.ColorJitter(0.01, 0.01, 0.01, 0.01),
+            transforms.RandomChoice(
+                [
+                    transforms.RandomResizedCrop((450, 600), scale=(0.7, 1.0)),
+                    safetransforms.SafeRotate(0.85)
+                ]
+            )
         ])
 
+        pil_img = transform(pil_img)
 
-        return transform(pil_img)
+        pil_img.save("./test-imgs/" + str(self.counter) + "img.jpg")
+        self.counter += 1
+
+        return pil_img
 
 
 class SampleSet:
