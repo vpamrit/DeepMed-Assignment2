@@ -76,10 +76,10 @@ def main(args):
 
     # Loss and optimizer
 
-    if args.loss_weights != None:
+    if args.loss_weights == None:
         criterion = nn.CrossEntropyLoss()
     else:
-        criterion = nn.CrossEntropyLoss(args.loss_weights)
+        criterion = nn.CrossEntropyLoss(torch.FloatTensor(args.loss_weights).to(device))
 
     if args.optim != None:
         if args.optim == "adadelta":
