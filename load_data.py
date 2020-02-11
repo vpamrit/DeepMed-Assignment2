@@ -28,6 +28,13 @@ class SkinDataset(Dataset):
     def get_df(self):
         return self.labels
 
+    def get_label_by_img_name(self, img_name):
+        target = self.labels.loc[self.labels['image'] == img_name]
+        target = target.iloc[0].iloc[1:]
+        label = np.where(target == 1)[0][0]
+
+        return label
+
     def get_label(self, idx):
         target_row = self.labels.iloc[idx, :]
         target = target_row.iloc[1:].to_numpy()
@@ -35,7 +42,6 @@ class SkinDataset(Dataset):
         label = np.where(target==1)[0]
 
         return label
-
 
 
     def get_data(self, idx):
@@ -220,6 +226,9 @@ class SkinDataManager(Dataset):
         return self
 
     def __next__(self):
+        if self.mode == "soft":
+            return next(super())
+
         if self.batch_size*self.batch_num >= len(self):
             self.generate_epoch_samples();
             raise StopIteration()

@@ -68,10 +68,18 @@ def main(args):
 
     #load the model to the appropriate device
     net = net.to(device)
+
+    if args.load_model != None:
+        net.load_state_dict((torch.load(args.load_model)))
+
     params = net.parameters()
 
     # Loss and optimizer
-    criterion = nn.CrossEntropyLoss()
+
+    if args.loss_weights != None:
+        criterion = nn.CrossEntropyLoss()
+    else:
+        criterion = nn.CrossEntropyLoss(args.loss_weights)
 
     if args.optim != None:
         if args.optim == "adadelta":
@@ -191,9 +199,11 @@ if __name__ == '__main__':
     parser.add_argument('--model_save_dir', type=str, default='./saved_models/', help='path to location to save models')
     parser.add_argument('--save_step', type=int , default=4, help='step size for saving trained models')
     parser.add_argument('--save_training_plot', nargs='?', type=str, const='./', help='location to save a plot showing testing and validation loss for the model')
+    parser.add_argument('--load_model', type=str, default=None, help='Location of the saved model to load and then train')
 
     # Model parameters
     parser.add_argument('--distribution_emulation_coefficient', type=float, default=0.95, help="coefficient used to move the distribution of train data towards uniform (i.e. 0 is true distribution of train dataset, 1 is uniform distribution)")
+    parser.add_argument('--loss_weights', type=float, nargs=7, help='input of weights where the sum is one - specifying how much the loss form each class should be weighted')
     parser.add_argument('--epoch_size', type=int, default=None, help="number of samples per epoch")
     parser.add_argument('--optim', type=str, default="adam", help="options such as adagrad, adadelta, sgd, etc.")
     parser.add_argument('--block_type', type=str, default="bottleneck", help='type of resnet layer (bottleneck or basic)')
