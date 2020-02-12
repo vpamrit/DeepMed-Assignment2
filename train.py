@@ -39,10 +39,10 @@ def main(args):
         os.makedirs(args.model_save_dir)
 
     train_data = SkinDataset(labels_file=args.train_labels_file,
-                           root_dir=args.train_image_dir, transform=True);
+                           root_dir=args.train_image_dir, transform=True, binary_mode=(args.num_classes==2), target_class=args.num_classes);
 
     validation_data = SkinDataset(labels_file=args.validation_labels_file,
-                                   root_dir=args.validation_image_dir);
+                                   root_dir=args.validation_image_dir, binary_mode=(args.num_classes==2), target_class=args.num_classes);
 
     train_manager = SkinDataManager(train_data, args.distribution_emulation_coefficient, args.batch_size, args.epoch_size)
     val_loader = DataLoader(dataset=validation_data, batch_size=args.validation_batch_size)

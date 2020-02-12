@@ -47,7 +47,7 @@ def main(argv):
 
         device = torch.device('cuda')
 
-        net = model.ResNet50().to('cuda')
+        net = model.ResNet50(num_classes=2).to('cuda')
         net.eval()
 
         with torch.no_grad():
@@ -57,7 +57,8 @@ def main(argv):
             image = torchvision.transforms.functional.to_tensor(raw_img)
 
             raw_pred = net(image.unsqueeze(0).float().to('cuda'))
-            pred_labels = torch.nn.functional.softmax(raw_pred, dim=1).tolist()[0]
+            pred_labels = torch.nn.functional.softmax(raw_pred, dim=1).tolist()
+            print(pred_labels)
 
             prediction = pred_labels.index(max(pred_labels))
             print("Predicted {}".format(prediction))
@@ -90,6 +91,7 @@ if __name__ == "__main__":
     parser.add_argument('--image_path', type=str, default='./data/test/120.jpg', help='test image directory')
     parser.add_argument('--model_path', type=str, default='./models/resnet32.pt' , help='path for model to load')
     parser.add_argument('--labels_file', type=str , default='', help='labels file for visualized images')
+    parser.add_argument('--binary_mode', type=str , default='', help='put in binary mode')
 
     #args for directory-based outputs
     parser.add_argument('--image_dir', type=str, default='', help='image directory if provided')
