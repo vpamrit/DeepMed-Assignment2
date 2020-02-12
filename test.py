@@ -35,11 +35,11 @@ def main(argv):
     mdata = None
     total_correct = 0
     total = 0
+    correct_count = [0,0,0,0,0,0,0]
+    total_count= [0,0,0,0,0,0,0]
 
     if argv.image_dir != '':
         mdata = SkinDataset(argv.labels_file, argv.image_dir)
-
-
 
     for f in files:
         if not torch.cuda.is_available():
@@ -67,7 +67,11 @@ def main(argv):
                 actual = get_label(f, mdata)
                 print("Actual {}".format(actual))
                 total += 1
-                total_correct += int(actual) == prediction
+                result = int(actual) == prediction
+                total_correct += result
+
+                correct_count[int(actual)] += result
+                total_count[int(actual)] += 1
 
             print(f)
             #print("X: {0:.4f}".format(pred_labels[0]))
@@ -75,6 +79,8 @@ def main(argv):
 
     if argv.image_dir != '' and argv.labels_file != '':
         print("ACCURACY: {}".format(float(total_correct / total)))
+        for i in range(len(total_count)):
+            print("CATEGORY {} ACCURACY {}".format(i, float(correct_count[i]/total_count[i])))
 
 
 if __name__ == "__main__":

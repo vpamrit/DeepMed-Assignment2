@@ -154,13 +154,13 @@ class ResNet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 
-def ResNet18(dropout=0.25, num_classes):
+def ResNet18(dropout=0.25, num_classes=7):
     return ResNet(BasicBlock, [2,2,2,2], num_classes, dropout=dropout)
 
-def ResNet34(dropout=0.25, num_classes):
+def ResNet34(dropout=0.25, num_classes=7):
     return ResNet(BasicBlock, [3,4,6,3], num_classes, dropout=dropout)
 
-def ResNet50(dropout=0.25 num_classes=7):
+def ResNet50(dropout=0.25, num_classes=7):
     return ResNet(Bottleneck, [3,4,6,3], num_classes, dropout=dropout)
 
 def ResNet101(dropout=0.25, num_classes=7):

@@ -60,7 +60,7 @@ def main(args):
         elif args.resnet_model == 101:
             net = model.ResNet101(args.dropout)
         elif args.resnet_model == 50:
-            net = model.ResNet50(args.dropout)
+            net = model.ResNet50(args.dropout, args.num_classes)
         elif args.resnet_model == 34:
             net = model.ResNet34(args.dropout)
         else:
@@ -119,7 +119,16 @@ def main(args):
             optimizer.zero_grad()
 
             outputs = net(inputs.float())
-            loss = criterion(outputs.float(), labels.squeeze().long())
+
+            if args.num_classes == 2:
+                label = torch.zeros([2])
+                if labels.squeeze().argmax(1).item() == args.target_class:
+                    label[0] = 1
+                else:
+                    label[1] = 1
+                    labels = label
+            else:
+                loss = criterion(outputs.float(), labels.squeeze().long())
             loss.backward()
 
 
@@ -200,6 +209,8 @@ if __name__ == '__main__':
     parser.add_argument('--validation_labels_file', type=str, default='./data/labels/Test_labels.csv', help='path to labels file for both validation and training datasets')
     parser.add_argument('--model_save_dir', type=str, default='./saved_models/', help='path to location to save models')
     parser.add_argument('--save_step', type=int , default=4, help='step size for saving trained models')
+    parser.add_argument('--num_classes', type=int , default=7, help='model to be trained as binary classifier')
+    parser.add_argument('--class_to_learn', type=int , default=0, help='model to be trained as binary classifier')
     parser.add_argument('--save_training_plot', nargs='?', type=str, const='./', help='location to save a plot showing testing and validation loss for the model')
     parser.add_argument('--load_model', type=str, default=None, help='Location of the saved model to load and then train')
 
