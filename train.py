@@ -5,6 +5,8 @@ import torchvision
 import numpy as np
 import os
 import model
+import densenet as densemodel
+import arlmodel
 import matplotlib.pyplot as plt
 from torchvision import transforms
 from torch.utils.data import DataLoader
@@ -14,13 +16,15 @@ import load_data as ld
 from load_data import SkinDataset, SkinDataManager
 
 #global variables related to the image dataset properties
-IMG_WIDTH = 490
-IMG_HEIGHT = 326
+IMG_WIDTH = 600
+IMG_HEIGHT = 450
 
 def computeAccuracy(outputs, labels, num_classes):
     softm = torch.nn.functional.softmax(outputs.float(), dim=1)
-    onehot = torch.nn.functional.one_hot(labels.squeeze(1).to(torch.int64), num_classes)
-    return ((softm>0.5).bool() & onehot.bool()).sum().item()
+    #onehot = torch.nn.functional.one_hot(labels.squeeze(1).to(torch.int64), num_classes)
+    #results = torch.max(softm, dim=1)
+    #return ((softm>0.5).bool() & onehot.bool()).sum().item()
+    return (torch.max(softm, dim=1) == labels.squeeze(1)).sum().item()
 
 def main(args):
     #device configuration
@@ -51,22 +55,32 @@ def main(args):
     # Build the models
     if args.num_layers != None and args.block_type != None:
         if args.block_type == "bottleneck":
-            net = model.ResNet(model.Bottleneck, args.num_layers, dropout=args.dropout)
+            net = arlmodel.arlnet(model.Bottleneck, args.num_layers, dropout=args.dropout)
         else:
-            net = model.ResNet(model.BasicBlock, args.num_layers, dropout=args.dropout)
+            net = arlmodel.arnet(model.BasicBlock, args.num_layers, dropout=args.dropout)
     else:
-        if args.resnet_model == 152:
-            net = model.ResNet152(args.dropout, args.num_classes)
-        elif args.resnet_model == 101:
-            net = model.ResNet101(args.dropout, args.num_classes)
-        elif args.resnet_model == 50:
-            net = model.ResNet50(args.dropout, args.num_classes)
-        elif args.resnet_model == 34:
-            net = model.ResNet34(args.dropout, args.num_classes)
-        else:
-            net = model.ResNet101(args.dropout, args.num_classes)
+        if args.arlnet_model == 152:
+            net = arlmodel.arlnet152(args.dropout, args.num_classes)
+        elif args.arlnet_model == 101:
+            net = arlmodel.arlnet101(args.dropout, args.num_classes)
+        elif args.arlnet_model == 50:
+            net = arlmodel.arlnet50(args.dropout, args.num_classes)
+        elif args.arlnet_model == 34:
+            net = arlmodel.arlnet34(args.dropout, args.num_classes)
 
-    #load the model to the appropriate device
+
+    if args.densenet_model == 121:
+        net = densemodel.densenet121(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
+    elif args.densenet_model == 161:
+        net = densemodel.densenet161(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
+    elif args.densenet_model == 169:
+        print("densenet 169")
+        net = densemodel.densenet169(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
+    elif args.densenet_model == 201:
+        net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
+    else:
+        net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
+
     net = net.to(device)
 
     if args.load_model != None:
@@ -165,7 +179,7 @@ def main(args):
 
         #save the model at the desired step
         if (epoch+1) % args.save_step == 0:
-          torch.save(net.state_dict(), args.model_save_dir+"resnet"+str(epoch+1)+".pt")
+          torch.save(net.state_dict(), args.model_save_dir+"arlnet"+str(epoch+1)+".pt")
 
         ##stopping conditions
         if failed_runs > 5 and prev_loss < loss:
@@ -208,15 +222,17 @@ if __name__ == '__main__':
     parser.add_argument('--target_class', type=int , default=0, help='model to be trained as binary classifier')
     parser.add_argument('--save_training_plot', nargs='?', type=str, const='./', help='location to save a plot showing testing and validation loss for the model')
     parser.add_argument('--load_model', type=str, default=None, help='Location of the saved model to load and then train')
+    parser.add_argument('--pretrained', type=bool, default=False, help='Transfer learning (only works for densenet)')
 
     # Model parameters
     parser.add_argument('--distribution_emulation_coefficient', type=float, default=0.95, help="coefficient used to move the distribution of train data towards uniform (i.e. 0 is true distribution of train dataset, 1 is uniform distribution)")
     parser.add_argument('--loss_weights', type=float, nargs=7, help='input of weights where the sum is one - specifying how much the loss form each class should be weighted')
     parser.add_argument('--epoch_size', type=int, default=None, help="number of samples per epoch")
     parser.add_argument('--optim', type=str, default="adam", help="options such as adagrad, adadelta, sgd, etc.")
-    parser.add_argument('--block_type', type=str, default="bottleneck", help='type of resnet layer (bottleneck or basic)')
+    parser.add_argument('--block_type', type=str, default="bottleneck", help='type of arlnet layer (bottleneck or basic)')
     parser.add_argument('--num_layers', type=int , nargs=4, help='input of four space-separated integers (i.e. 1 2 30 2 ) where each number represents the number of blocks at that respective layer')
-    parser.add_argument('--resnet_model', type=int , nargs=1, default=50, help='use to specify a pre-designed resnet model (18 34 50 101 152). NOTE: this option will be overriden if both num_layers and block_type are specified')
+    parser.add_argument('--arlnet_model', type=int , nargs=1, default=50, help='use to specify a pre-designed arlnet model (18 34 50 101 152). NOTE: this option will be overriden if both num_layers and block_type are specified')
+    parser.add_argument('--densenet_model', type=int , nargs=1, default=50, help='use to specify a pre-designed densenet model (121 161 169 201)')
     parser.add_argument('--num_epochs', type=int, default=15)
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--validation_batch_size', type=int, default=2)

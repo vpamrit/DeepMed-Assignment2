@@ -7,6 +7,7 @@ import torchvision
 import skimage
 import re
 import PIL
+import densenet as densemodel
 
 from skimage import io
 from os.path import join, isfile
