@@ -125,7 +125,9 @@ def main(args):
 
             train_correct += computeAccuracy(outputs, labels)
 
-            torch.nn.utils.clip_grad_norm_(net.parameters(), args.clipping_value)
+            if args.clipping_value != None:
+                torch.nn.utils.clip_grad_norm_(net.parameters(), args.clipping_value)
+
             optimizer.step()
             running_loss += loss.item()
             total_loss += loss.item()
@@ -213,7 +215,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--validation_batch_size', type=int, default=2)
     parser.add_argument('--learning_rate', type=float, default=0.001)
-    parser.add_argument('--clipping_value', type=float, default=1.0)
+    parser.add_argument('--clipping_value', type=float, default=None)
     parser.add_argument('--dropout', type=float, default=0.25)
     parser.add_argument('--cpu', nargs='?', type=bool, const=True)
     parser.add_argument('--gpu', nargs='?', type=bool, const=True)
