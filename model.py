@@ -154,23 +154,23 @@ class ResNet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 
-def ResNet18(dropout=0.25):
-    return ResNet(BasicBlock, [2,2,2,2], dropout=dropout)
+def ResNet18(dropout=0.25, num_classes):
+    return ResNet(BasicBlock, [2,2,2,2], num_classes, dropout=dropout)
 
-def ResNet34(dropout=0.25):
-    return ResNet(BasicBlock, [3,4,6,3], dropout=dropout)
+def ResNet34(dropout=0.25, num_classes):
+    return ResNet(BasicBlock, [3,4,6,3], num_classes, dropout=dropout)
 
-def ResNet50(dropout=0.25):
-    return ResNet(Bottleneck, [3,4,6,3], dropout=dropout)
+def ResNet50(dropout=0.25 num_classes=7):
+    return ResNet(Bottleneck, [3,4,6,3], num_classes, dropout=dropout)
 
-def ResNet101(dropout=0.25):
-    return ResNet(Bottleneck, [3,4,23,3], dropout=dropout)
+def ResNet101(dropout=0.25, num_classes=7):
+    return ResNet(Bottleneck, [3,4,23,3], num_classes, dropout=dropout)
 
-def ResNet152(dropout=0.25):
-    return ResNet(Bottleneck, [3,8,36,3], dropout=dropout)
+def ResNet152(dropout=0.25, num_classes=7):
+    return ResNet(Bottleneck, [3,8,36,3], num_classes, dropout=dropout)
 
-def ResNet101(dropout=0.25):
-    return ResNet(Bottleneck, [3,4,23,3], dropout=dropout)
+def ResNet101(dropout=0.25, num_classes=7):
+    return ResNet(Bottleneck, [3,4,23,3], num_classes, dropout=dropout)
 
-def ResNet152(dropout=0.25):
-    return ResNet(Bottleneck, [3,8,36,3], dropout=dropout)
+def ResNet152(dropout=0.25, num_classes=7):
+    return ResNet(Bottleneck, [3,8,36,3], num_classes, dropout=dropout)
