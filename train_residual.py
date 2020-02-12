@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader
 #custom imports
 import load_data as ld
 from load_data import SkinDataset, SkinDataManager
+from model.residual_attention_network import ResidualAttentionModel_448input as ResidualAttentionModel
 
 #global variables related to the image dataset properties
 IMG_WIDTH = 600
@@ -21,9 +22,6 @@ IMG_HEIGHT = 450
 
 def computeAccuracy(outputs, labels, num_classes):
     softm = torch.nn.functional.softmax(outputs.float(), dim=1)
-    #onehot = torch.nn.functional.one_hot(labels.squeeze(1).to(torch.int64), num_classes)
-    #results = torch.max(softm, dim=1)
-    #return ((softm>0.5).bool() & onehot.bool()).sum().item()
     value, indices = torch.max(softm, dim=1)
     return (indices == labels.squeeze(1)).int().sum().item()
 
@@ -54,35 +52,8 @@ def main(args):
 
 
     # Build the models
-    if args.num_layers != None and args.block_type != None:
-        if args.block_type == "bottleneck":
-            net = arlmodel.arlnet(model.Bottleneck, args.num_layers, dropout=args.dropout)
-        else:
-            net = arlmodel.arnet(model.BasicBlock, args.num_layers, dropout=args.dropout)
-    else:
-        if args.arlnet_model == 152:
-            net = arlmodel.arlnet152(args.dropout, args.num_classes)
-        elif args.arlnet_model == 101:
-            net = arlmodel.arlnet101(args.dropout, args.num_classes)
-        elif args.arlnet_model == 50:
-            net = arlmodel.arlnet50(args.dropout, args.num_classes)
-        elif args.arlnet_model == 34:
-            net = arlmodel.arlnet34(args.dropout, args.num_classes)
 
-
-    if args.densenet_model == 121:
-        net = densemodel.densenet121(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
-    elif args.densenet_model == 161:
-        net = densemodel.densenet161(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
-    elif args.densenet_model == 169:
-        print("densenet 169")
-        net = densemodel.densenet169(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
-    elif args.densenet_model == 201:
-        net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
-    else:
-        net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
-
-    net = net.to(device)
+    net = ResidualAttentionModel().to(device)
 
     if args.load_model != None:
         net.load_state_dict((torch.load(args.load_model)))
