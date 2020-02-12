@@ -17,9 +17,9 @@ from load_data import SkinDataset, SkinDataManager
 IMG_WIDTH = 490
 IMG_HEIGHT = 326
 
-def computeAccuracy(outputs, labels):
+def computeAccuracy(outputs, labels, num_classes):
     softm = torch.nn.functional.softmax(outputs.float(), dim=1)
-    onehot = torch.nn.functional.one_hot(labels.squeeze(1).to(torch.int64), 7)
+    onehot = torch.nn.functional.one_hot(labels.squeeze(1).to(torch.int64), num_classes)
     return ((softm>0.5).bool() & onehot.bool()).sum().item()
 
 def main(args):
@@ -56,15 +56,15 @@ def main(args):
             net = model.ResNet(model.BasicBlock, args.num_layers, dropout=args.dropout)
     else:
         if args.resnet_model == 152:
-            net = model.ResNet152(args.dropout)
+            net = model.ResNet152(args.dropout, args.num_classes)
         elif args.resnet_model == 101:
-            net = model.ResNet101(args.dropout)
+            net = model.ResNet101(args.dropout, args.num_classes)
         elif args.resnet_model == 50:
             net = model.ResNet50(args.dropout, args.num_classes)
         elif args.resnet_model == 34:
-            net = model.ResNet34(args.dropout)
+            net = model.ResNet34(args.dropout, args.num_classes)
         else:
-            net = model.ResNet101(args.dropout)
+            net = model.ResNet101(args.dropout, args.num_classes)
 
     #load the model to the appropriate device
     net = net.to(device)
@@ -120,19 +120,11 @@ def main(args):
 
             outputs = net(inputs.float())
 
-            if args.num_classes == 2:
-                label = torch.zeros([2])
-                if labels.squeeze().argmax(1).item() == args.target_class:
-                    label[0] = 1
-                else:
-                    label[1] = 1
-                    labels = label
-            else:
-                loss = criterion(outputs.float(), labels.squeeze().long())
+            loss = criterion(outputs.float(), labels.squeeze().long())
             loss.backward()
 
 
-            train_correct += computeAccuracy(outputs, labels)
+            train_correct += computeAccuracy(outputs, labels, args.num_classes)
 
             if args.clipping_value != None:
                 torch.nn.utils.clip_grad_norm_(net.parameters(), args.clipping_value)
@@ -154,7 +146,7 @@ def main(args):
             net.eval()
             with torch.no_grad():
                 outputs = net(inputs.float())
-                val_correct += computeAccuracy(outputs, labels)
+                val_correct += computeAccuracy(outputs, labels, args.num_classes)
                 loss += criterion(outputs, labels.squeeze().long()).item()
 
         print("------------------------------------------------------------")
@@ -210,7 +202,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_save_dir', type=str, default='./saved_models/', help='path to location to save models')
     parser.add_argument('--save_step', type=int , default=4, help='step size for saving trained models')
     parser.add_argument('--num_classes', type=int , default=7, help='model to be trained as binary classifier')
-    parser.add_argument('--class_to_learn', type=int , default=0, help='model to be trained as binary classifier')
+    parser.add_argument('--target_class', type=int , default=0, help='model to be trained as binary classifier')
     parser.add_argument('--save_training_plot', nargs='?', type=str, const='./', help='location to save a plot showing testing and validation loss for the model')
     parser.add_argument('--load_model', type=str, default=None, help='Location of the saved model to load and then train')
 

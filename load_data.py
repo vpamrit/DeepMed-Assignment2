@@ -16,11 +16,13 @@ import safetransforms
 
 class SkinDataset(Dataset):
 
-    def __init__(self, labels_file, root_dir, transform=False):
+    def __init__(self, labels_file, root_dir, transform=False, binary_mode=False, target_class=6):
         self.labels = pd.read_csv(labels_file)
         self.root_dir = root_dir
         self.transform = transform
         self.counter = 0
+        self.binary_mode = binary_mode
+        self.target_class = target_class
 
     def __len__(self):
         return self.labels.shape[0];
@@ -66,7 +68,15 @@ class SkinDataset(Dataset):
         target = torch.from_numpy(label)
 
 
+        if self.binary_mode:
+            target = self.convert_to_binary_label(target)
+
         return image, target
+
+    def convert_to_binary_label(self, target):
+        newlabel = torch.zeros([1])
+        newlabel[0] = target.item() == self.target_class
+        return newlabel
 
     def exec_pil_transforms(self, pil_img):
         #consider a safe rotation here
