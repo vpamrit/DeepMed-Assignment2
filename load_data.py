@@ -76,6 +76,9 @@ class SkinDataset(Dataset):
     def convert_to_binary_label(self, target):
         newlabel = torch.zeros([1])
         newlabel[0] = target.item() == self.target_class
+        #print("TARGET CLASS {}".format(self.target_class))
+        #print("ACTUAL CLASS {}".format(target.item()))
+        #print(newlabel)
         return newlabel
 
     def exec_pil_transforms(self, pil_img):

@@ -57,7 +57,7 @@ def main(argv):
             image = torchvision.transforms.functional.to_tensor(raw_img)
 
             raw_pred = net(image.unsqueeze(0).float().to('cuda'))
-            pred_labels = torch.nn.functional.softmax(raw_pred, dim=1).tolist()
+            pred_labels = torch.nn.functional.softmax(raw_pred, dim=1).tolist()[0]
             print(pred_labels)
 
             prediction = pred_labels.index(max(pred_labels))
