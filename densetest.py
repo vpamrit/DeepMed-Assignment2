@@ -9,6 +9,8 @@ import PIL
 import densenet as densemodel
 import seaborn as sns
 import numpy as np
+import matplotlib.pyplot as plt
+import sklearn
 
 from sklearn.metrics import confusion_matrix
 from skimage import io
@@ -106,6 +108,7 @@ def main(argv):
 
         target_names=["MEL", "NV", "BCC", "AKIEC", "BKL", "DF", "VASC"]
         cm = confusion_matrix(actuals, predictions)
+        print(confusion_matrix)
         # Normalise
         cmn = cm.astype('float') /cm.sum(axis=1)[:, np.newaxis]
         fig, ax = plt.subplots(figsize=(10,10))
@@ -113,6 +116,7 @@ def main(argv):
         plt.ylabel('Actual')
         plt.xlabel('Predicted')
         plt.show(block=False)
+        plt.savefig('./confusion.png')
 
 
 if __name__ == "__main__":
