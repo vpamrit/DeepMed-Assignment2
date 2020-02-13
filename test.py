@@ -96,7 +96,7 @@ def main(argv):
 
             prediction = pred_labels.index(max(pred_labels))
             predictions += [prediction]
-            print("Predicted {}".format(prediction))
+            print(prediction)
 
             if argv.labels_file != '':
                 actual = get_label(f, mdata)
@@ -108,8 +108,6 @@ def main(argv):
 
                 correct_count[int(actual)] += result
                 total_count[int(actual)] += 1
-
-            print(f)
 
     if argv.image_dir != '' and argv.labels_file != '':
         print("ACCURACY: {}".format(float(total_correct / total)))
@@ -156,6 +154,5 @@ if __name__ == "__main__":
     parser.add_argument('--image_dir', type=str, default='', help='image directory if provided')
 
     args = parser.parse_args()
-    print(args)
     main(args)
 
