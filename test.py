@@ -118,8 +118,8 @@ def main(argv):
 
 
         accuracy = sklearn.metrics.accuracy_score(actuals, predictions)
-        recall = sklearn.metrics.recall_score(actuals, predictions, average=None)
-        precision = sklearn.metrics.precision_score(actuals, predictions, average=None)
+        recall = sklearn.metrics.recall_score(actuals, predictions, average='weighted')
+        precision = sklearn.metrics.precision_score(actuals, predictions, average='weighted')
 
         print("Accuracy {}".format(accuracy))
         print("Recall {}".format(recall))
