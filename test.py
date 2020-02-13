@@ -10,6 +10,7 @@ import PIL
 import densenet as densemodel
 
 from skimage import io
+from sklearn.metrics import confusion_matrix
 from os.path import join, isfile
 from os import listdir
 from PIL import Image
@@ -38,6 +39,8 @@ def main(argv):
     total = 0
     correct_count = [0,0,0,0,0,0,0]
     total_count= [0,0,0,0,0,0,0]
+    predictions = []
+    actuals = []
 
     if argv.image_dir != '':
         mdata = SkinDataset(argv.labels_file, argv.image_dir)
@@ -63,10 +66,11 @@ def main(argv):
 
             prediction = pred_labels.index(max(pred_labels))
             print("Predicted {}".format(prediction))
-            print(type(prediction))
+            predictions += prediction
 
             if argv.labels_file != '':
                 actual = get_label(f, mdata)
+                actuals += actual
                 print("Actual {}".format(actual))
                 total += 1
                 result = int(actual) == prediction
@@ -83,6 +87,8 @@ def main(argv):
         print("ACCURACY: {}".format(float(total_correct / total)))
         for i in range(len(total_count)):
             print("CATEGORY {} ACCURACY {}".format(i, float(correct_count[i]/total_count[i])))
+
+        print(confusion_matrix(actuals, predictions))
 
 
 if __name__ == "__main__":

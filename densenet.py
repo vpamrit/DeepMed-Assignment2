@@ -179,8 +179,10 @@ class DenseNet(nn.Module):
         # Final batch norm
         self.features.add_module('norm5', nn.BatchNorm2d(num_features))
 
+
+        self.final_num_features = num_features
         # Linear layer
-        self.classifier = nn.Linear(num_features, num_classes)
+        self.classifier = nn.Linear(num_features, num_classes) #where num_classes used to be
 
         # Official init from torch repo.
         for m in self.modules():
@@ -275,5 +277,16 @@ def densenet201(pretrained=False, progress=True, **kwargs):
         memory_efficient (bool) - If True, uses checkpointing. Much more memory efficient,
           but slower. Default: *False*. See `"paper" <https://arxiv.org/pdf/1707.06990.pdf>`_
     """
-    return _densenet('densenet201', 32, (6, 12, 48, 32), 64, pretrained, progress,
+
+    num_classes = kwargs['num_classes']
+
+    if pretrained and kwargs['num_classes'] != 1000:
+        kwargs['num_classes'] = 1000
+
+    net = _densenet('densenet201', 32, (6, 12, 48, 32), 64, pretrained, progress,
                      **kwargs)
+
+    if pretrained:
+        net.classifier = nn.Linear(in_features=net.final_num_features, out_features=num_classes, bias=(net.classifier.bias is not None))
+
+    return net
