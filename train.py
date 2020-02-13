@@ -20,9 +20,6 @@ IMG_HEIGHT = 450
 
 def computeAccuracy(outputs, labels, num_classes):
     softm = torch.nn.functional.softmax(outputs.float(), dim=1)
-    #onehot = torch.nn.functional.one_hot(labels.squeeze(1).to(torch.int64), num_classes)
-    #results = torch.max(softm, dim=1)
-    #return ((softm>0.5).bool() & onehot.bool()).sum().item()
     value, indices = torch.max(softm, dim=1)
     return (indices == labels.squeeze(1)).int().sum().item()
 
@@ -74,7 +71,6 @@ def main(args):
     elif args.densenet_model == 161:
         net = densemodel.densenet161(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
     elif args.densenet_model == 169:
-        print("densenet 169")
         net = densemodel.densenet169(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
     elif args.densenet_model == 201:
         net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
@@ -133,9 +129,6 @@ def main(args):
             optimizer.zero_grad()
 
             outputs = net(inputs.float())
-
-            #print(outputs)
-            #print(labels)
 
             loss = criterion(outputs.float(), labels.squeeze().long())
             loss.backward()

@@ -91,7 +91,7 @@ class SafeRotate(object):
             x = torchvision.transforms.functional.crop(x, yfin, xfin, crop_height, crop_width)
 
 
-        possible_angles = [i for i in range(-30, 30, 5)]
+        possible_angles = [i for i in range(-15, 15, 5)]
         final_angle = possible_angles[random.randint(0, len(possible_angles)-1)]
 
         #perform the final operations

@@ -111,7 +111,7 @@ def main(argv):
         print(confusion_matrix)
         # Normalise
         cmn = cm.astype('float') /cm.sum(axis=1)[:, np.newaxis]
-        fig, ax = plt.subplots(figsize=(10,10))
+        fig, ax = plt.subplots(figsize=(20,20))
         sns.heatmap(cmn, annot=True, fmt='.2f', xticklabels=target_names, yticklabels=target_names)
         plt.ylabel('Actual')
         plt.xlabel('Predicted')
