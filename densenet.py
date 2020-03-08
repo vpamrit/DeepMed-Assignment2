@@ -136,7 +136,7 @@ class DenseNet(nn.Module):
         bn_size (int) - multiplicative factor for number of bottle neck layers
           (i.e. bn_size * k features in the bottleneck layer)
         drop_rate (float) - dropout rate after each dense layer
-        num_classes (int) - number of classification classes
+        target_classes (int) - number of classification classes
         memory_efficient (bool) - If True, uses checkpointing. Much more memory efficient,
           but slower. Default: *False*. See `"paper" <https://arxiv.org/pdf/1707.06990.pdf>`_
     """
@@ -144,7 +144,7 @@ class DenseNet(nn.Module):
     __constants__ = ['features']
 
     def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16),
-                 num_init_features=64, bn_size=4, drop_rate=0, num_classes=1000, memory_efficient=False):
+                 num_init_features=64, bn_size=4, drop_rate=0, target_classes=1000, memory_efficient=False):
 
         super(DenseNet, self).__init__()
 
@@ -182,7 +182,7 @@ class DenseNet(nn.Module):
 
         self.final_num_features = num_features
         # Linear layer
-        self.classifier = nn.Linear(num_features, num_classes) #where num_classes used to be
+        self.classifier = nn.Linear(num_features, target_classes) #where target_classes used to be
 
         # Official init from torch repo.
         for m in self.modules():
@@ -278,15 +278,15 @@ def densenet201(pretrained=False, progress=True, **kwargs):
           but slower. Default: *False*. See `"paper" <https://arxiv.org/pdf/1707.06990.pdf>`_
     """
 
-    num_classes = kwargs['num_classes']
+    target_classes = kwargs['target_classes']
 
-    if pretrained and kwargs['num_classes'] != 1000:
-        kwargs['num_classes'] = 1000
+    if pretrained and kwargs['target_classes'] != 1000:
+        kwargs['target_classes'] = 1000
 
     net = _densenet('densenet201', 32, (6, 12, 48, 32), 64, pretrained, progress,
                      **kwargs)
 
     if pretrained:
-        net.classifier = nn.Linear(in_features=net.final_num_features, out_features=num_classes, bias=(net.classifier.bias is not None))
+        net.classifier = nn.Linear(in_features=net.final_num_features, out_features=len(target_classes), bias=(net.classifier.bias is not None))
 
     return net

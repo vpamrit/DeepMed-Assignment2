@@ -6,7 +6,7 @@ import torchvision
 import numpy as np
 import os
 import densenet as densemodel
-import arlmodel
+import resnetmodel
 import matplotlib.pyplot as plt
 from torchvision import transforms
 from torch.utils.data import DataLoader
@@ -64,34 +64,37 @@ def main(args):
     train_manager = SkinDataManager(train_data, args.distribution_emulation_coefficient, args.batch_size, args.epoch_size, target_classes=target_classes)
     val_loader = DataLoader(dataset=validation_data, batch_size=args.validation_batch_size)
 
+    net = None
+
 
     # Build the models
     if args.num_layers != None and args.block_type != None:
         if args.block_type == "bottleneck":
-            net = arlmodel.resnet(model.Bottleneck, args.num_layers, dropout=args.dropout)
+            net = resnetmodel.resnet(model.Bottleneck, args.num_layers, dropout=args.dropout)
         else:
-            net = arlmodel.arnet(model.BasicBlock, args.num_layers, dropout=args.dropout)
+            net = resnetmodel.arnet(model.BasicBlock, args.num_layers, dropout=args.dropout)
     else:
         if args.resnet_model == 152:
-            net = arlmodel.resnet152(args.dropout, target_classes)
+            net = resnetmodel.resnet152(args.dropout, target_classes)
         elif args.resnet_model == 101:
-            net = arlmodel.resnet101(args.dropout, target_classes)
+            net = resnetmodel.resnet101(args.dropout, target_classes)
         elif args.resnet_model == 50:
-            net = arlmodel.resnet50(args.dropout, target_classes)
+            net = resnetmodel.resnet50(args.dropout, target_classes)
         elif args.resnet_model == 34:
-            net = arlmodel.resnet34(args.dropout, target_classes)
+            net = resnetmodel.resnet34(args.dropout, target_classes)
 
 
-    if args.densenet_model == 121:
-        net = densemodel.densenet121(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
-    elif args.densenet_model == 161:
-        net = densemodel.densenet161(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
-    elif args.densenet_model == 169:
-        net = densemodel.densenet169(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
-    elif args.densenet_model == 201:
-        net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
-    else:
-        net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
+    if net == None:
+        if args.densenet_model == 121:
+            net = densemodel.densenet121(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
+        elif args.densenet_model == 161:
+            net = densemodel.densenet161(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
+        elif args.densenet_model == 169:
+            net = densemodel.densenet169(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
+        elif args.densenet_model == 201:
+            net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
+        else:
+            net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
 
     net = net.to(device)
 
