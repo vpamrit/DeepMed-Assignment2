@@ -14,15 +14,18 @@ from torchvision import transforms
 import safetransforms
 
 
+#target class will be a dict of targets
 class SkinDataset(Dataset):
 
-    def __init__(self, labels_file, root_dir, transform=False, binary_mode=False, target_class=6):
+    def __init__(self, labels_file, root_dir, transform=False, target_classes=[0,1,2,3,4,5,6]):
         self.labels = pd.read_csv(labels_file)
         self.root_dir = root_dir
         self.transform = transform
         self.counter = 0
-        self.binary_mode = binary_mode
-        self.target_class = target_class
+        self.target_classes = target_classes
+
+    def set_targets(self, target_classes):
+        self.target_classes = target_classes
 
     def __len__(self):
         return self.labels.shape[0];
@@ -43,8 +46,10 @@ class SkinDataset(Dataset):
 
         label = np.where(target==1)[0]
 
-        return label
+        #changes label type appropriately
+        label = self.convert_label(label)
 
+        return label
 
     def get_data(self, idx):
         if torch.is_tensor(idx):
@@ -68,17 +73,25 @@ class SkinDataset(Dataset):
         target = torch.from_numpy(label)
 
 
-        if self.binary_mode:
-            target = self.convert_to_binary_label(target)
-
         return image, target
 
-    def convert_to_binary_label(self, target):
-        newlabel = torch.zeros([1])
-        newlabel[0] = target.item() == self.target_class
-        #print("TARGET CLASS {}".format(self.target_class))
-        #print("ACTUAL CLASS {}".format(target.item()))
-        #print(newlabel)
+    def convert_label(self, label):
+
+        #if default do nothing
+        if not len(self.target_classes):
+            return label
+
+        #initialize to -1
+        newlabel = -1*np.ones([1])
+
+        #set the appropriate label to 1
+        if label[0] in self.target_classes:
+            newlabel[0] = self.target_classes.index(label[0])
+        else:
+            #represents "others" index
+            if "others" in self.target_classes:
+                newlabel[0] = len(self.target_classes) - 1
+
         return newlabel
 
     def exec_pil_transforms(self, pil_img):
@@ -106,6 +119,8 @@ class SkinDataset(Dataset):
 
 
 class SampleSet:
+
+
     def __init__(self, num_classes=7):
         self.data = [set() for i in range(num_classes)]
 
@@ -114,6 +129,14 @@ class SampleSet:
 
     def __len__(self):
         return len(self.data)
+
+    def size(self):
+        total = 0
+
+        for i in range(len(self.data)):
+            total += len(self.data[i])
+
+        return total
 
     def isEmpty(self):
         empty = 1
@@ -177,28 +200,35 @@ class SampleSet:
         return target_list
 
 
-#custom dataloader but single-threaded
+#can behave as custom dataloader but single-threaded
 class SkinDataManager(Dataset):
-    def __init__(self, dataset, dist_emulation, batch_size, epoch_size=None, num_classes=7, mode="soft"):
+    def __init__(self, dataset, dist_emulation, batch_size, epoch_size=None, target_classes=[0,1,2,3,4,5,6], mode="soft"):
         self.data = dataset
+        self.target_classes = target_classes
+        self.data.set_targets(target_classes)
+
         self.flatten = dist_emulation
+        self.num_classes = len(self.target_classes)
         self.epoch_size = epoch_size
         self.batch_size = batch_size
-        self.avg = len(dataset)/num_classes
-        self.num_classes = num_classes
+        self.avg = len(dataset)/self.num_classes
         self.batch_num = 0
         self.epoch = None
         self.mode = mode
 
-        if self.epoch_size == None:
-            self.epoch_size = len(dataset)
-
-
-        self.unused = SampleSet()
+        self.unused = SampleSet(self.num_classes)
 
         #process df to extract the indices for each value [0: ...., 1: ...., 6: s3, s4, s5..]
         for i in range(len(dataset)):
-            self.unused[dataset.get_label(i)[0]].add(i)
+            mclass = int(self.data.get_label(i)[0])
+
+            #filter out unwanted indices
+            if mclass != -1:
+                self.unused[mclass].add(i)
+
+
+        if self.epoch_size == None:
+            self.epoch_size = self.unused.size()
 
         #compute the desired number of each category in the epoch => populate the arrays
         self.num_samples = [int(len(samples) - (len(samples) - self.avg)*self.flatten) for samples in self.unused]
@@ -213,8 +243,9 @@ class SkinDataManager(Dataset):
 
         diff = abs(total_sum - self.epoch_size)
 
+        #fills the remaining slots available for the epoch
         while diff > 0:
-            index = diff % 7
+            index = diff % self.num_classes
             if self.num_samples[index] > 0 or op == 1:
                 self.num_samples[index] += op
 
@@ -223,7 +254,7 @@ class SkinDataManager(Dataset):
         self.sampling_type = ["undersampling" if self.num_samples[i] < len(self.unused[i]) else "oversampling" for i in range(self.num_classes) ]
 
         #set up unused for future use
-        self.used = SampleSet()
+        self.used = SampleSet(self.num_classes)
         self.generate_epoch_samples()
 
         print(self.num_samples)
@@ -231,6 +262,7 @@ class SkinDataManager(Dataset):
 
     def __getitem__(self, idx):
         return self.data[self.epoch[idx]]
+
 
     def __len__(self):
         return len(self.epoch)
@@ -247,6 +279,10 @@ class SkinDataManager(Dataset):
             raise StopIteration()
         else:
             return self.get_batch()
+
+    def set_targets(self, target_classes):
+        self.target_classes = target_classes
+        self.data.set_targets(target_classes)
 
     def get_epoch_list(self):
         return self.epoch

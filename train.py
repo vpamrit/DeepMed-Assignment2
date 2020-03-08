@@ -1,4 +1,5 @@
 import argparse
+import gc
 import torch
 import torch.nn as nn
 import torchvision
@@ -23,7 +24,22 @@ def computeAccuracy(outputs, labels, num_classes):
     value, indices = torch.max(softm, dim=1)
     return (indices == labels.squeeze(1)).int().sum().item()
 
+
+def process(target_classes_str):
+    tmplist = [str(item) for item in args.list.split(',')]
+    final_list = [int(item) for item in tmplist if item != "others"]
+
+    #if the last item is others
+    if tmplist[-1] == "others":
+        final_list.append("others")
+
+    return final_list
+
+
 def main(args):
+    target_classes = process(args.target_classes)
+    num_classes = len(target_classes)
+
     #device configuration
     if args.cpu != None:
         device = torch.device('cpu')
@@ -40,42 +56,42 @@ def main(args):
         os.makedirs(args.model_save_dir)
 
     train_data = SkinDataset(labels_file=args.train_labels_file,
-                           root_dir=args.train_image_dir, transform=True, binary_mode=(args.num_classes==2), target_class=args.target_class);
+                           root_dir=args.train_image_dir, transform=True);
 
     validation_data = SkinDataset(labels_file=args.validation_labels_file,
-                                   root_dir=args.validation_image_dir, binary_mode=(args.num_classes==2), target_class=args.target_class);
+                                   root_dir=args.validation_image_dir, target_class=target_classes);
 
-    train_manager = SkinDataManager(train_data, args.distribution_emulation_coefficient, args.batch_size, args.epoch_size)
+    train_manager = SkinDataManager(train_data, args.distribution_emulation_coefficient, args.batch_size, args.epoch_size, target_classes=target_classes)
     val_loader = DataLoader(dataset=validation_data, batch_size=args.validation_batch_size)
 
 
     # Build the models
     if args.num_layers != None and args.block_type != None:
         if args.block_type == "bottleneck":
-            net = arlmodel.arlnet(model.Bottleneck, args.num_layers, dropout=args.dropout)
+            net = arlmodel.resnet(model.Bottleneck, args.num_layers, dropout=args.dropout)
         else:
             net = arlmodel.arnet(model.BasicBlock, args.num_layers, dropout=args.dropout)
     else:
-        if args.arlnet_model == 152:
-            net = arlmodel.arlnet152(args.dropout, args.num_classes)
-        elif args.arlnet_model == 101:
-            net = arlmodel.arlnet101(args.dropout, args.num_classes)
-        elif args.arlnet_model == 50:
-            net = arlmodel.arlnet50(args.dropout, args.num_classes)
-        elif args.arlnet_model == 34:
-            net = arlmodel.arlnet34(args.dropout, args.num_classes)
+        if args.resnet_model == 152:
+            net = arlmodel.resnet152(args.dropout, target_classes)
+        elif args.resnet_model == 101:
+            net = arlmodel.resnet101(args.dropout, target_classes)
+        elif args.resnet_model == 50:
+            net = arlmodel.resnet50(args.dropout, target_classes)
+        elif args.resnet_model == 34:
+            net = arlmodel.resnet34(args.dropout, target_classes)
 
 
     if args.densenet_model == 121:
-        net = densemodel.densenet121(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
+        net = densemodel.densenet121(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
     elif args.densenet_model == 161:
-        net = densemodel.densenet161(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
+        net = densemodel.densenet161(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
     elif args.densenet_model == 169:
-        net = densemodel.densenet169(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
+        net = densemodel.densenet169(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
     elif args.densenet_model == 201:
-        net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
+        net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
     else:
-        net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=args.num_classes)
+        net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
 
     net = net.to(device)
 
@@ -134,7 +150,7 @@ def main(args):
             loss.backward()
 
 
-            train_correct += computeAccuracy(outputs, labels, args.num_classes)
+            train_correct += computeAccuracy(outputs, labels, num_classes)
 
             if args.clipping_value != None:
                 torch.nn.utils.clip_grad_norm_(net.parameters(), args.clipping_value)
@@ -156,7 +172,7 @@ def main(args):
             net.eval()
             with torch.no_grad():
                 outputs = net(inputs.float())
-                val_correct += computeAccuracy(outputs, labels, args.num_classes)
+                val_correct += computeAccuracy(outputs, labels, num_classes)
                 loss += criterion(outputs, labels.squeeze().long()).item()
 
         print("------------------------------------------------------------")
@@ -172,7 +188,7 @@ def main(args):
 
         #save the model at the desired step
         if (epoch+1) % args.save_step == 0:
-          torch.save(net.state_dict(), args.model_save_dir+"arlnet"+str(epoch+1)+".pt")
+          torch.save(net.state_dict(), args.model_save_dir+"model"+str(epoch+1)+".pt")
 
         ##stopping conditions
         if failed_runs > 5 and prev_loss < loss:
@@ -200,6 +216,13 @@ def main(args):
         plt.savefig(args.save_training_plot+"loss_plot.png")
 
     plt.show()
+
+    #remove model at the end
+    #clean up
+    net = None
+    gc.collect()
+    torch.cuda.empty_cache()
+
     print('Finished Training')
 
 
@@ -211,20 +234,19 @@ if __name__ == '__main__':
     parser.add_argument('--validation_labels_file', type=str, default='./data/labels/Validation_labels.csv', help='path to labels file for both validation and training datasets')
     parser.add_argument('--model_save_dir', type=str, default='./saved_models/', help='path to location to save models')
     parser.add_argument('--save_step', type=int , default=4, help='step size for saving trained models')
-    parser.add_argument('--num_classes', type=int , default=7, help='model to be trained as binary classifier')
-    parser.add_argument('--target_class', type=int , default=0, help='model to be trained as binary classifier')
+    parser.add_argument('--target_classes', type=str , default="0,1,2,3,4,5,6", help='list of all classies to be considered by the model delimited by a comma (use "others" for remaining if desired)')
     parser.add_argument('--save_training_plot', nargs='?', type=str, const='./', help='location to save a plot showing testing and validation loss for the model')
     parser.add_argument('--load_model', type=str, default=None, help='Location of the saved model to load and then train')
     parser.add_argument('--pretrained', type=bool, default=False, help='Transfer learning (only works for densenet)')
 
     # Model parameters
     parser.add_argument('--distribution_emulation_coefficient', type=float, default=0.95, help="coefficient used to move the distribution of train data towards uniform (i.e. 0 is true distribution of train dataset, 1 is uniform distribution)")
-    parser.add_argument('--loss_weights', type=float, nargs=7, help='input of weights where the sum is one - specifying how much the loss form each class should be weighted')
+    parser.add_argument('--loss_weights', type=float, default=None, nargs=7, help='input of weights where the sum is one - specifying how much the loss form each class should be weighted')
     parser.add_argument('--epoch_size', type=int, default=None, help="number of samples per epoch")
     parser.add_argument('--optim', type=str, default="adam", help="options such as adagrad, adadelta, sgd, etc.")
-    parser.add_argument('--block_type', type=str, default="bottleneck", help='type of arlnet layer (bottleneck or basic)')
+    parser.add_argument('--block_type', type=str, default="bottleneck", help='type of resnet layer (bottleneck or basic)')
     parser.add_argument('--num_layers', type=int , nargs=4, help='input of four space-separated integers (i.e. 1 2 30 2 ) where each number represents the number of blocks at that respective layer')
-    parser.add_argument('--arlnet_model', type=int , nargs=1, default=None, help='use to specify a pre-designed arlnet model (18 34 50 101 152). NOTE: this option will be overriden if both num_layers and block_type are specified')
+    parser.add_argument('--resnet_model', type=int , nargs=1, default=None, help='use to specify a pre-designed resnet model (18 34 50 101 152). NOTE: this option will be overriden if both num_layers and block_type are specified')
     parser.add_argument('--densenet_model', type=int , nargs=1, default=169, help='use to specify a pre-designed densenet model (121 161 169 201)')
     parser.add_argument('--num_epochs', type=int, default=15)
     parser.add_argument('--batch_size', type=int, default=8)
