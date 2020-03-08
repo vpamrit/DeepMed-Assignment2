@@ -26,7 +26,7 @@ def computeAccuracy(outputs, labels, num_classes):
 
 
 def process(target_classes_str):
-    tmplist = [str(item) for item in args.list.split(',')]
+    tmplist = [str(item) for item in target_classes_str.split(',')]
     final_list = [int(item) for item in tmplist if item != "others"]
 
     #if the last item is others
@@ -59,7 +59,7 @@ def main(args):
                            root_dir=args.train_image_dir, transform=True);
 
     validation_data = SkinDataset(labels_file=args.validation_labels_file,
-                                   root_dir=args.validation_image_dir, target_class=target_classes);
+                                   root_dir=args.validation_image_dir, target_classes=target_classes);
 
     train_manager = SkinDataManager(train_data, args.distribution_emulation_coefficient, args.batch_size, args.epoch_size, target_classes=target_classes)
     val_loader = DataLoader(dataset=validation_data, batch_size=args.validation_batch_size)

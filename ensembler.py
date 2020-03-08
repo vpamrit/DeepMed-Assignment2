@@ -18,21 +18,23 @@ def main(args):
     models_df = pd.read_csv(args.models_csv)
     print(models_df)
 
-    os.mkdir(args.model_save_dir)
+    if not os.path.isdir(args.model_save_dir):
+        os.mkdir(args.model_save_dir)
 
     for i, row in models_df.iterrows():
-        model = row['model_name']
+        model_name = row['model_name']
+        model_num = row['model_number']
         model_type = row['model_type']
         target_classes = row['target_classes']
         balance = row['balance']
 
-        save_folder = args.model_save_dir + model_type + "_" + i
+        save_folder = args.model_save_dir + model_type + "_" + str(i)
 
         #begin the train cycle here
-        command = ('python3 train.py --resnet_model {} \
+        command = 'python3 train.py --{}_model {} \
                   --distribution_emulation_coefficient {} \
-                  -- model_save_dir {} \
-                  --target_classes {}'.format(model, balance, save_folder, target_classes)
+                  --model_save_dir {} \
+                  --target_classes {}'.format(model_name, model_num, balance, save_folder, target_classes)
 
         print(command)
 
