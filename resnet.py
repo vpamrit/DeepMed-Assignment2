@@ -106,20 +106,20 @@ class Bottleneck(nn.Module):
         return out
 
 
-class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=2, option='B', dropout=0.25):
-        super(ResNet, self).__init__()
+class resnet(nn.Module):
+    def __init__(self, block, num_blocks, option='B', dropout=0.25, target_classes=[0,1,2,3,4,5,6]):
+        super(resnet, self).__init__()
         self.in_planes = 64
-
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
+        self.target_classes=target_classes
 
         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=3, option=option, dropout=dropout)
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2, option=option, dropout=dropout)
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=3, option=option, dropout=dropout)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2, option=option, dropout=dropout)
 
-        self.linear = nn.Linear(71680, num_classes)
+        self.linear = nn.Linear(71680, len(target_classes))
         self._initialize_weights()
 
     def _make_layer(self, block, planes, num_blocks, stride, option, dropout):
@@ -156,17 +156,17 @@ class ResNet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 
-def ResNet18(dropout=0.25):
-    return ResNet(BasicBlock, [2,2,2,2], dropout=dropout)
+def resnet18(dropout=0.25, target_classes=[0,1,2,3,4,5,6]):
+    return resnet(BasicBlock, [2,2,2,2], dropout=dropout, target_classes=target_classes)
 
-def ResNet34(dropout=0.25):
-    return ResNet(BasicBlock, [3,4,6,3], dropout=dropout)
+def resnet34(dropout=0.25, target_classes=[0,1,2,3,4,5,6]):
+    return resnet(BasicBlock, [3,4,6,3], dropout=dropout, target_classes=target_classes)
 
-def ResNet50(dropout=0.25):
-    return ResNet(Bottleneck, [3,4,6,3], dropout=dropout)
+def resnet50(dropout=0.25, target_classes=[0,1,2,3,4,5,6]):
+    return resnet(Bottleneck, [3,4,6,3], dropout=dropout, target_classes=target_classes)
 
-def ResNet101(dropout=0.25):
-    return ResNet(Bottleneck, [3,4,23,3], dropout=dropout)
+def resnet101(dropout=0.25, target_classes=[0,1,2,3,4,5,6]):
+    return resnet(Bottleneck, [3,4,23,3], dropout=dropout, target_classes=target_classes)
 
-def ResNet152(dropout=0.25):
-    return ResNet(Bottleneck, [3,8,36,3], dropout=dropout)
+def resnet152(dropout=0.25, target_classes=[0,1,2,3,4,5,6]):
+    return resnet(Bottleneck, [3,8,36,3], dropout=dropout, target_classes=target_classes)

@@ -6,7 +6,7 @@ import torchvision
 import numpy as np
 import os
 import densenet as densemodel
-import resnetmodel
+import resnet as resnetmodel
 import matplotlib.pyplot as plt
 from torchvision import transforms
 from torch.utils.data import DataLoader
@@ -86,15 +86,15 @@ def main(args):
 
     if net == None:
         if args.densenet_model == 121:
-            net = densemodel.densenet121(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
+            net = densemodel.densenet121(args.pretrained, drop_rate=args.dropout, target_classes=target_classes)
         elif args.densenet_model == 161:
-            net = densemodel.densenet161(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
+            net = densemodel.densenet161(args.pretrained, drop_rate=args.dropout, target_classes=target_classes)
         elif args.densenet_model == 169:
-            net = densemodel.densenet169(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
+            net = densemodel.densenet169(args.pretrained, drop_rate=args.dropout, target_classes=target_classes)
         elif args.densenet_model == 201:
-            net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
+            net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, target_classes=target_classes)
         else:
-            net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, num_classes=target_classes)
+            net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, target_classes=target_classes)
 
     net = net.to(device)
 
