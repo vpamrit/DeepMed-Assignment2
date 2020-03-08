@@ -74,6 +74,7 @@ def main(args):
         else:
             net = resnetmodel.arnet(model.BasicBlock, args.num_layers, dropout=args.dropout)
     else:
+        print("RESNET MODEL " + str(type(args.resnet_model)))
         if args.resnet_model == 152:
             net = resnetmodel.resnet152(args.dropout, target_classes)
         elif args.resnet_model == 101:
@@ -249,7 +250,7 @@ if __name__ == '__main__':
     parser.add_argument('--optim', type=str, default="adam", help="options such as adagrad, adadelta, sgd, etc.")
     parser.add_argument('--block_type', type=str, default="bottleneck", help='type of resnet layer (bottleneck or basic)')
     parser.add_argument('--num_layers', type=int , nargs=4, help='input of four space-separated integers (i.e. 1 2 30 2 ) where each number represents the number of blocks at that respective layer')
-    parser.add_argument('--resnet_model', type=int , nargs=1, default=None, help='use to specify a pre-designed resnet model (18 34 50 101 152). NOTE: this option will be overriden if both num_layers and block_type are specified')
+    parser.add_argument('--resnet_model', type=int, default=None, help='use to specify a pre-designed resnet model (18 34 50 101 152). NOTE: this option will be overriden if both num_layers and block_type are specified')
     parser.add_argument('--densenet_model', type=int , nargs=1, default=169, help='use to specify a pre-designed densenet model (121 161 169 201)')
     parser.add_argument('--num_epochs', type=int, default=15)
     parser.add_argument('--batch_size', type=int, default=8)
