@@ -19,10 +19,15 @@ from load_data import SkinDataset, SkinDataManager
 IMG_WIDTH = 600
 IMG_HEIGHT = 450
 
-def computeAccuracy(outputs, labels, num_classes):
+def computeAccuracy(outputs, labels, target_classes):
     softm = torch.nn.functional.softmax(outputs.float(), dim=1)
     value, indices = torch.max(softm, dim=1)
-    return (indices == labels.squeeze(1)).int().sum().item()
+
+    total = 0
+    for i in target_classes:
+        total += (labels.squeeze(1) == i).sum().item()
+
+    return (indices == labels.squeeze(1)).int().sum().item(), total
 
 
 def process(target_classes_str):
@@ -138,6 +143,8 @@ def main(args):
         total_loss = 0.0
         val_correct = 0
         train_correct = 0
+        train_total = 0
+        validation_total = 0
 
         for i, (inputs, labels) in enumerate(train_loader, 0):
             net.train()
@@ -153,7 +160,9 @@ def main(args):
             loss.backward()
 
 
-            train_correct += computeAccuracy(outputs, labels, num_classes)
+            train_corrects, train_tally += computeAccuracy(outputs, labels, num_classes)
+            train_correct += train_corrects
+            train_total += train_tally
 
             if args.clipping_value != None:
                 torch.nn.utils.clip_grad_norm_(net.parameters(), args.clipping_value)
@@ -175,14 +184,17 @@ def main(args):
             net.eval()
             with torch.no_grad():
                 outputs = net(inputs.float())
-                val_correct += computeAccuracy(outputs, labels, num_classes)
+                val_corrects, validation_tally += computeAccuracy(outputs, labels, num_classes)
+                val_correct += val_corrects
+                validation_total += validation_tally
+
                 loss += criterion(outputs, labels.squeeze().long()).item()
 
         print("------------------------------------------------------------")
         print("Epoch %5d" % (epoch+1))
-        print("Training loss: {:.5f}, Avg Loss: {:.5f}".format(total_loss, total_loss / train_data.__len__()))
+        print("Training loss: {:.5f}, Avg Loss: {:.5f}".format(total_loss, total_loss / max(train_total, 1)))
         print("Training Accuracy: {}".format(train_correct / len(train_manager)))
-        print("Validation Loss: {:.5f}, Avg Loss: {:.5f}".format(loss, loss / validation_data.__len__()))
+        print("Validation Loss: {:.5f}, Avg Loss: {:.5f}".format(loss, loss / max(validation_total, 1)))
         print("Validation Accuracy: {}".format(val_correct/ len(validation_data)))
         print("------------------------------------------------------------")
 
