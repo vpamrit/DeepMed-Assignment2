@@ -17,12 +17,13 @@ def main(args):
         balance = row['balance']
         epoch_size = row['epoch_size']
 
-        save_folder = args.model_save_dir + model_type + "_" + str(i)
+        save_folder = args.model_save_dir + model_type + "_" + str(i) + "/"
 
         #begin the train cycle here
         command = 'python3 train.py --{}_model {} \
                   --distribution_emulation_coefficient {} \
                   --model_save_dir {} \
+                  --save_step 2 \
                   --epoch_size {} \
                   --target_classes {}'.format(model_name, model_num, balance, save_folder, epoch_size, target_classes)
 
