@@ -72,7 +72,7 @@ class SkinDataset(Dataset):
         numpy_image = np.array(raw_image)
         numpy_image = cc.color_constancy(numpy_image)
         raw_image = Image.fromarray(numpy_image)
-        raw_image = transforms.functional.resize((225, 300))
+        raw_image = transforms.functional.resize(raw_image, (225, 300))
         #raw_image.save("./test-imgs/" + str(self.counter) + "img.jpg")
 
         #normalize and transform
