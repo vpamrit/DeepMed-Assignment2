@@ -162,7 +162,7 @@ def main(args):
             loss.backward()
 
 
-            train_corrects, train_tally += computeAccuracy(outputs, labels, num_classes)
+            train_corrects, train_tally = computeAccuracy(outputs, labels, target_classes)
             train_correct += train_corrects
             train_total += train_tally
 
@@ -186,7 +186,7 @@ def main(args):
             net.eval()
             with torch.no_grad():
                 outputs = net(inputs.float())
-                val_corrects, validation_tally += computeAccuracy(outputs, labels, num_classes)
+                val_corrects, validation_tally = computeAccuracy(outputs, labels, target_classes)
                 val_correct += val_corrects
                 validation_total += validation_tally
 
