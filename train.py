@@ -252,7 +252,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_layers', type=int , nargs=4, help='input of four space-separated integers (i.e. 1 2 30 2 ) where each number represents the number of blocks at that respective layer')
     parser.add_argument('--resnet_model', type=int, default=None, help='use to specify a pre-designed resnet model (18 34 50 101 152). NOTE: this option will be overriden if both num_layers and block_type are specified')
     parser.add_argument('--densenet_model', type=int , nargs=1, default=169, help='use to specify a pre-designed densenet model (121 161 169 201)')
-    parser.add_argument('--num_epochs', type=int, default=15)
+    parser.add_argument('--num_epochs', type=int, default=16)
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--validation_batch_size', type=int, default=2)
     parser.add_argument('--learning_rate', type=float, default=0.001)
