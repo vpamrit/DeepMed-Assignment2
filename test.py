@@ -7,16 +7,19 @@ import skimage
 import re
 import PIL
 import densenet as densemodel
+import resnet as resnetmodel
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
 import sklearn
+import color_constancy as cc
 
 from sklearn.metrics import confusion_matrix
 from skimage import io
 from os.path import join, isfile
 from os import listdir
 from PIL import Image
+from torchvision import transforms
 from load_data import SkinDataset
 
 def get_files(argv):
@@ -48,7 +51,7 @@ def main(argv):
     if argv.image_dir != '':
         mdata = SkinDataset(argv.labels_file, argv.image_dir)
 
-    net = densemodel.densenet201(num_classes=7).to('cuda')
+    net = resnetmodel.resnet101(target_classes=[0, -1]).to('cuda') # 0 vs others
     net.load_state_dict(torch.load(argv.model_path))
     net2 = None
     net3 = None
@@ -56,15 +59,15 @@ def main(argv):
 
     net.eval()
 
+    # we use the 1 vs others and ALL
+    # if 1: we use 1 vs 4 and 0 vs 1
+    # if not 1: we use Most and 4,others and 0,others combined
+
     if argv.model_path2 != None:
         net2 = densemodel.densenet201(num_classes=7).to('cuda')
         net2.load_state_dict(torch.load(argv.model_path2))
         net2.eval()
 
-    if argv.model_path3 != None:
-        net3 = densemodel.densenet201(num_classes=7).to('cuda')
-        net3.load_state_dict(torch.load(argv.model_path3))
-        net3.eval()
 
     for f in files:
         if not torch.cuda.is_available():
@@ -74,13 +77,18 @@ def main(argv):
 
 
         with torch.no_grad():
+            raw_image = Image.open(f)
 
+            numpy_image = np.array(raw_image)
+            numpy_image = cc.color_constancy(numpy_image)
+            raw_image = Image.fromarray(numpy_image)
+            raw_image = transforms.functional.resize(raw_image, (225, 300))
 
-            raw_img = Image.open(f)
-            image = torchvision.transforms.functional.to_tensor(raw_img)
+            #normalize and transform
+            image = transforms.functional.to_tensor(raw_image)
+            image = transforms.functional.normalize(image, mean=[0.5, 0.5, 0.5], std=[0.25, 0.25, 0.25])
 
             raw_pred = net(image.unsqueeze(0).float().to('cuda'))
-
             pred_labels = torch.nn.functional.softmax(raw_pred, dim=1).tolist()[0]
 
 
@@ -89,12 +97,8 @@ def main(argv):
                 pred_labels2 = torch.nn.functional.softmax(raw_pred2, dim=1).tolist()[0]
                 pred_labels = [2*x+y for x,y in zip(pred_labels, pred_labels2)]
 
-            if argv.model_path3 != None:
-                raw_pred3 = net3(image.unsqueeze(0).float().to('cuda'))
-                pred_labels3 = torch.nn.functional.softmax(raw_pred3, dim=1).tolist()[0]
-                pred_labels = [x+y for x,y in zip(pred_labels, pred_labels3)]
 
-            prediction = pred_labels.index(max(pred_labels))
+            prediction = net.target_classes[pred_labels.index(max(pred_labels))]
             predictions += [prediction]
             print(prediction)
 
@@ -103,7 +107,7 @@ def main(argv):
                 actuals += [actual]
                 print("Actual {}".format(actual))
                 total += 1
-                result = int(actual) == prediction
+                result = int(actual) == prediction or (int(actual) != 0 and prediction == -1)
                 total_correct += result
 
                 correct_count[int(actual)] += result
@@ -145,7 +149,7 @@ if __name__ == "__main__":
     #single image outputs
     parser.add_argument('--image_path', type=str, default='./data/test/120.jpg', help='test image directory')
     parser.add_argument('--model_path', type=str, default='./models/densenet8.pt', help='path for model to load')
-    parser.add_argument('--model_path2', type=str, default='./models/densenet20.pt', help='path for model to load')
+    parser.add_argument('--model_path2', type=str, default=None, help='path for model to load')
     parser.add_argument('--model_path3', type=str, default=None, help='path for model to load')
     parser.add_argument('--labels_file', type=str , default='', help='labels file for visualized images')
     parser.add_argument('--binary_mode', type=str , default='', help='put in binary mode')

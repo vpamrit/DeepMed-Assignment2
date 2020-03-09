@@ -66,7 +66,6 @@ def main(args):
 
     net = None
 
-
     # Build the models
     if args.num_layers != None and args.block_type != None:
         if args.block_type == "bottleneck":
