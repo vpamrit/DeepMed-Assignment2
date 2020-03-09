@@ -67,7 +67,9 @@ def main(args):
                                    root_dir=args.validation_image_dir, target_classes=target_classes);
 
     train_manager = SkinDataManager(train_data, args.distribution_emulation_coefficient, args.batch_size, args.epoch_size, target_classes=target_classes)
-    val_loader = DataLoader(dataset=validation_data, batch_size=args.validation_batch_size)
+    validation_manager = SkinDataManager(validation_data, 0, args.batch_size, None, target_classes=target_classes)
+
+    val_loader = DataLoader(dataset=validation_manager, batch_size=args.batch_size, shuffle=False);
 
     net = None
 
