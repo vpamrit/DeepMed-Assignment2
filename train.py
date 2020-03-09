@@ -268,7 +268,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=20)
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--validation_batch_size', type=int, default=2)
-    parser.add_argument('--learning_rate', type=float, default=0.001)
+    parser.add_argument('--learning_rate', type=float, default=0.0001)
     parser.add_argument('--clipping_value', type=float, default=None)
     parser.add_argument('--dropout', type=float, default=0.25)
     parser.add_argument('--cpu', nargs='?', type=bool, const=True)
