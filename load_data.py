@@ -5,6 +5,7 @@ import torch
 import torchvision
 import numpy as np
 import pandas as pd
+import color_constancy as cc
 
 from PIL import Image
 from torch.utils.data import Dataset
@@ -68,10 +69,16 @@ class SkinDataset(Dataset):
         if self.transform:
             raw_image = self.exec_pil_transforms(raw_image)
 
+        numpy_image = np.array(raw_image)
+        numpy_image = cc.color_constancy(numpy_image)
+        raw_image = Image.fromarray(numpy_image)
+        #raw_image.save("./test-imgs/" + str(self.counter) + "img.jpg")
+
+        #normalize and transform
         image = transforms.functional.to_tensor(raw_image)
+        image = transforms.functional.normalize(image, mean=[0.5, 0.5, 0.5], std=[0.25, 0.25, 0.25])
 
         target = torch.from_numpy(label)
-
 
         return image, target
 
@@ -107,7 +114,8 @@ class SkinDataset(Dataset):
                     transforms.RandomResizedCrop((450, 600), scale=(0.7, 1.0)),
                     safetransforms.SafeRotate(0.85)
                 ]
-            )
+            ),
+            transforms.Resize((225, 300))
         ])
 
         pil_img = transform(pil_img)
