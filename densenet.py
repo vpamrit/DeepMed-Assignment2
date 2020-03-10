@@ -252,9 +252,19 @@ def densenet161(pretrained=False, progress=True, **kwargs):
         memory_efficient (bool) - If True, uses checkpointing. Much more memory efficient,
           but slower. Default: *False*. See `"paper" <https://arxiv.org/pdf/1707.06990.pdf>`_
     """
-    return _densenet('densenet161', 48, (6, 12, 36, 24), 96, pretrained, progress,
+
+    target_classes = kwargs['target_classes']
+
+    if pretrained and len(kwargs['target_classes']) != 1000:
+        kwargs['target_classes'] = [0]*1000
+
+    net =  _densenet('densenet161', 48, (6, 12, 36, 24), 96, pretrained, progress,
                      **kwargs)
 
+    if pretrained:
+        net.classifier = nn.Linear(in_features=net.final_num_features, out_features=len(target_classes), bias=(net.classifier.bias is not None))
+
+     return net
 
 def densenet169(pretrained=False, progress=True, **kwargs):
     r"""Densenet-169 model from

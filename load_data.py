@@ -66,6 +66,7 @@ class SkinDataset(Dataset):
     def __getitem__(self, idx):
         img_name, raw_image, label = self.get_data(idx)
 
+        raw_image.save("./test-imgs/" + str(self.counter) + "imgo.jpg")
         if self.transform:
             raw_image = self.exec_pil_transforms(raw_image)
 
@@ -73,7 +74,10 @@ class SkinDataset(Dataset):
         numpy_image = cc.color_constancy(numpy_image)
         raw_image = Image.fromarray(numpy_image)
         raw_image = transforms.functional.resize(raw_image, (225, 300))
-        #raw_image.save("./test-imgs/" + str(self.counter) + "img.jpg")
+
+        #resize to 224 x 224 for transfer learning
+        raw_image = transforms.functional.center_crop(raw_image, (224, 224))
+        raw_image.save("./test-imgs/" + str(self.counter) + "img.jpg")
 
         #normalize and transform
         image = transforms.functional.to_tensor(raw_image)

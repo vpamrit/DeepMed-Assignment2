@@ -23,6 +23,7 @@ def main(args):
         command = 'python3 train.py --{}_model {} \
                   --distribution_emulation_coefficient {} \
                   --model_save_dir {} \
+                  --pretrained True \
                   --save_step 2 \
                   --epoch_size {} \
                   --target_classes {}'.format(model_name, model_num, balance, save_folder, epoch_size, target_classes)
