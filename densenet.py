@@ -264,7 +264,7 @@ def densenet161(pretrained=False, progress=True, **kwargs):
     if pretrained:
         net.classifier = nn.Linear(in_features=net.final_num_features, out_features=len(target_classes), bias=(net.classifier.bias is not None))
 
-     return net
+    return net
 
 def densenet169(pretrained=False, progress=True, **kwargs):
     r"""Densenet-169 model from
