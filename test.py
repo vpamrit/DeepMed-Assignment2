@@ -6,7 +6,7 @@ import torchvision
 import skimage
 import re
 import PIL
-import densenet as densemodel
+import densenet as densenetmodel
 import resnet as resnetmodel
 import seaborn as sns
 import numpy as np
@@ -51,7 +51,7 @@ def main(argv):
     if argv.image_dir != '':
         mdata = SkinDataset(argv.labels_file, argv.image_dir)
 
-    net = resnetmodel.resnet101(target_classes=[1, 4]).to('cuda') # 0 vs others
+    net = densenetmodel.densenet201(target_classes=[0,1,2,3,4,5,6]).to('cuda') # 0 vs others
     net.load_state_dict(torch.load(argv.model_path))
     net2 = None
     net3 = None
@@ -64,7 +64,7 @@ def main(argv):
     # if not 1: we use Most and 4,others and 0,others combined
 
     if argv.model_path2 != None:
-        net2 = densemodel.densenet201(num_classes=7).to('cuda')
+        net2 = densenetmodel.densenet201(num_classes=7).to('cuda')
         net2.load_state_dict(torch.load(argv.model_path2))
         net2.eval()
 
@@ -105,7 +105,7 @@ def main(argv):
             if argv.labels_file != '':
                 actual = get_label(f, mdata)
 
-                if int(actual) in [1,4]:
+                if int(actual) in [0,1,2,3,4,5,6]:
                     actuals += [actual]
 
                     print("Actual {}".format(actual))
@@ -131,8 +131,11 @@ def main(argv):
         print("Precision {}".format(precision))
 
         target_names=["MEL", "NV", "BCC", "AKIEC", "BKL", "DF", "VASC"]
+        print(len(actuals))
+        print(len(predictions))
         cm = confusion_matrix(actuals, predictions)
         print(confusion_matrix)
+
         # Normalise
         cmn = cm.astype('float') /cm.sum(axis=1)[:, np.newaxis]
         fig, ax = plt.subplots(figsize=(10,10))

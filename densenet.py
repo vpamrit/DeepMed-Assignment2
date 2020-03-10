@@ -147,6 +147,7 @@ class DenseNet(nn.Module):
                  num_init_features=64, bn_size=4, drop_rate=0, target_classes=[0,1,2,3,4,5,6], memory_efficient=False):
 
         super(DenseNet, self).__init__()
+        self.target_classes = target_classes
         num_classes = len(target_classes)
 
         # First convolution

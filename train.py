@@ -25,7 +25,7 @@ def computeAccuracy(outputs, labels, target_classes):
 
     total = 0
     for i in target_classes:
-        total += (labels.squeeze(1) == i).sum().item()
+        total += (labels.squeeze(1) == i).int().sum().item()
 
     return (indices == labels.squeeze(1)).int().sum().item(), total
 
