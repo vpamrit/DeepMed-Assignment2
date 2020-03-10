@@ -94,6 +94,7 @@ def main(args):
         if args.densenet_model == 121:
             net = densemodel.densenet121(args.pretrained, drop_rate=args.dropout, target_classes=target_classes)
         elif args.densenet_model == 161:
+            print("DENSENET-161")
             net = densemodel.densenet161(args.pretrained, drop_rate=args.dropout, target_classes=target_classes)
         elif args.densenet_model == 169:
             net = densemodel.densenet169(args.pretrained, drop_rate=args.dropout, target_classes=target_classes)
