@@ -51,7 +51,7 @@ def main(argv):
     if argv.image_dir != '':
         mdata = SkinDataset(argv.labels_file, argv.image_dir)
 
-    net = resnetmodel.resnet101(target_classes=[0, -1]).to('cuda') # 0 vs others
+    net = resnetmodel.resnet101(target_classes=[1, 4]).to('cuda') # 0 vs others
     net.load_state_dict(torch.load(argv.model_path))
     net2 = None
     net3 = None
@@ -104,14 +104,17 @@ def main(argv):
 
             if argv.labels_file != '':
                 actual = get_label(f, mdata)
-                actuals += [actual]
-                print("Actual {}".format(actual))
-                total += 1
-                result = int(actual) == prediction or (int(actual) != 0 and prediction == -1)
-                total_correct += result
 
-                correct_count[int(actual)] += result
-                total_count[int(actual)] += 1
+                if int(actual) in [1,4]:
+                    actuals += [actual]
+
+                    print("Actual {}".format(actual))
+                    total += 1
+                    result = int(actual) == prediction
+                    total_correct += result
+
+                    correct_count[int(actual)] += result
+                    total_count[int(actual)] += 1
 
     if argv.image_dir != '' and argv.labels_file != '':
         print("ACCURACY: {}".format(float(total_correct / total)))

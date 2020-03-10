@@ -80,7 +80,6 @@ def main(args):
         else:
             net = resnetmodel.arnet(model.BasicBlock, args.num_layers, dropout=args.dropout)
     else:
-        print("RESNET MODEL " + str(type(args.resnet_model)))
         if args.resnet_model == 152:
             net = resnetmodel.resnet152(args.dropout, target_classes)
         elif args.resnet_model == 101:
@@ -102,6 +101,8 @@ def main(args):
             net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, target_classes=target_classes)
         else:
             net = densemodel.densenet201(args.pretrained, drop_rate=args.dropout, target_classes=target_classes)
+    else:
+        print("RESNET MODEL " + str(args.resnet_model))
 
     net = net.to(device)
 

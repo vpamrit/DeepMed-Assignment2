@@ -144,9 +144,10 @@ class DenseNet(nn.Module):
     __constants__ = ['features']
 
     def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16),
-                 num_init_features=64, bn_size=4, drop_rate=0, target_classes=1000, memory_efficient=False):
+                 num_init_features=64, bn_size=4, drop_rate=0, target_classes=[0,1,2,3,4,5,6], memory_efficient=False):
 
         super(DenseNet, self).__init__()
+        num_classes = len(target_classes)
 
         # First convolution
         self.features = nn.Sequential(OrderedDict([
@@ -182,7 +183,7 @@ class DenseNet(nn.Module):
 
         self.final_num_features = num_features
         # Linear layer
-        self.classifier = nn.Linear(num_features, target_classes) #where target_classes used to be
+        self.classifier = nn.Linear(num_features, num_classes) #where target_classes used to be
 
         # Official init from torch repo.
         for m in self.modules():
@@ -280,8 +281,8 @@ def densenet201(pretrained=False, progress=True, **kwargs):
 
     target_classes = kwargs['target_classes']
 
-    if pretrained and kwargs['target_classes'] != 1000:
-        kwargs['target_classes'] = 1000
+    if pretrained and len(kwargs['target_classes']) != 1000:
+        kwargs['target_classes'] = [0]*1000
 
     net = _densenet('densenet201', 32, (6, 12, 48, 32), 64, pretrained, progress,
                      **kwargs)
