@@ -24,14 +24,20 @@ def computeAccuracy(outputs, labels, target_classes):
     softm = torch.nn.functional.softmax(outputs.float(), dim=1)
     value, indices = torch.max(softm, dim=1)
 
-    total = 0
+    labels_counts = list(labels.squeeze(1).size())
+    num = 1
 
-    if target_classes[-1] != "others":
-        target_classes = copy.deepcopy(target_classes)
-        target_classes[-1] = -1
+    for i in labels_counts:
+        num *= i
 
-    for i in target_classes:
-        total += (labels.squeeze(1) == i).int().sum().item()
+    total += num
+
+    #if target_classes[-1] != "others":
+    #    target_classes = copy.deepcopy(target_classes)
+    #    target_classes[-1] = -1
+
+    #for i in target_classes:
+    #    total += (labels.squeeze(1) == i).int().sum().item()
 
 
     return (indices == labels.squeeze(1)).int().sum().item(), total
