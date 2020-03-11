@@ -1,4 +1,5 @@
 import argparse
+import copy
 import gc
 import torch
 import torch.nn as nn
@@ -24,8 +25,14 @@ def computeAccuracy(outputs, labels, target_classes):
     value, indices = torch.max(softm, dim=1)
 
     total = 0
+
+    if target_classes[-1] != "others":
+        target_classes = copy.deepcopy(target_classes)
+        target_classes[-1] = -1
+
     for i in target_classes:
         total += (labels.squeeze(1) == i).int().sum().item()
+
 
     return (indices == labels.squeeze(1)).int().sum().item(), total
 
